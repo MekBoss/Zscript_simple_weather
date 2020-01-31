@@ -1,0 +1,3 @@
+server bool CWE_weather = false;
+server int CWE_intensity = 3;
+server int CWE_weather_type = 0;

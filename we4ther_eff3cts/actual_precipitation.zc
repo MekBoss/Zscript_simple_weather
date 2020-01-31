@@ -1,0 +1,95 @@
+class weather_actor : actor
+{
+private bool on_hold;
+
+bool is_on_hold() const
+{
+    return on_hold;
+}
+
+default
+{
+    +nointeraction
+    //+noclip
+    
+    mass 100;
+    radius 5;
+    height 5;
+    scale 0.1;
+
+}
+
+states
+{
+
+    //loading snowflkes sprites
+    snfl a 0;
+
+    spawn:
+        tnt1 a 1;
+    stop;
+
+    rain:
+        wtdl a 1
+        {
+            on_hold = false;
+            vel.z -= 1;
+            A_SetRenderStyle(0.6, STYLE_translucent);
+            scale = (0.004, 0.015);
+            vel.z = -frandom(10, 18);
+        }
+    rain_falling:
+        wtdl a 1
+        {
+            if(pos.z <= floorz)
+                setstatelabel("cooldown");
+        }
+    loop;
+
+    snow:
+        snfl a 1
+        {
+            on_hold = false;
+            vel.z -= frandom(3.5, 5.5);
+            scale = (0.02, 0.02);
+            frame = random(0, 8);
+            A_SetRenderStyle(1, STYLE_translucent);
+        
+            bROLLSPRITE = true;
+            bROLLCENTER = true;
+            bFLATSPRITE = true;
+        }
+    snow_falling:
+        snfl "#" 2
+        {
+            vel.xy += ( frandom(-0.5, 0.5), frandom(-0.5, 0.5) );
+            roll += random(-40, 40);
+            pitch += random(-20, 20);
+
+            if(pos.z <= floorz)
+                setstatelabel("cooldown");
+        }
+    loop;
+
+    death:
+    cooldown:
+        tnt1 a -1
+        {
+            vel = (0, 0, 0);
+            scale = (1, 1);
+            A_SetRenderStyle(1, STYLE_normal);
+            roll = 0;
+            pitch = 0;
+
+            bROLLSPRITE = false;
+            bROLLCENTER = false;
+            bFLATSPRITE = false;
+
+            on_hold = true;
+            bcorpse = false;
+            setorigin( (double.infinity, double.infinity, double.infinity), false);
+        }
+    stop;
+}
+
+}

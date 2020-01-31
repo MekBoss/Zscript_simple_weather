@@ -1,0 +1,201 @@
+const interval_between_points = 150;
+
+//thing which "spawn" precipitation
+class sector_cyclon : thinker
+{
+private weather_event god_of_weather;
+private array<sector> attached_sectors;
+private vector2 projection_x, projection_y;
+private uint time;
+private vector2 bounds_vertice_1, bounds_vertice_2, bounds_vertice_3, bounds_vertice_4;
+
+private cyclon_state_enum cyclon_state;
+private array<thundercloud> thunder_front;
+private uint timer;
+
+
+enum cyclon_state_enum
+{
+    CSE_PLAYER_LOOKING = 1,
+    CSE_IN_SUBMISSION = 1 << 1,
+};
+/*
+compare
+    &
+unset
+    &= ~
+set
+    |=
+ */
+
+sector_cyclon twist_the_cyclone(array<sector> s, vector2 first, vector2 second, weather_event it)
+{
+    if(time == 0)
+    {
+        attached_sectors.copy(s);
+        god_of_weather = it;
+        projection_x = first;
+        projection_y = second;
+
+        update_bbox_vertices(projection_x, projection_y);
+        sector_thunderclouds();
+        
+        time = level.totaltime;
+    }
+
+    return self;
+}
+
+array<actor> ttt;
+private void sector_thunderclouds()
+{
+    double p_dist = interval_between_points * 2;
+
+    double x_length, y_length, x_delta, y_delta;
+    int _x_, _y_;
+    uint i = 0;
+
+    x_length = projection_x.y - projection_x.y;
+    y_length = projection_y.y - projection_y.y;
+
+    x_delta = x_length / p_dist;
+    y_delta = y_length / p_dist;
+  
+    _x_ = int(x_delta);
+    _y_ = int(y_delta);
+
+    if(abs(_x_) > 0)
+        x_delta = abs( ( ( (x_delta - _x_) / _x_) * p_dist ) );
+    if(abs(_y_) > 0)
+        y_delta = abs( ( ( (y_delta - _y_) / _y_) * p_dist ) );
+
+    x_delta += p_dist;
+    y_delta += p_dist;
+
+    double x_min = projection_x.x + interval_between_points;
+    double y_min = projection_y.x + interval_between_points;
+
+    for(double xx = x_min; xx < (projection_x.y + x_delta); xx += x_delta)
+    {
+        for(double yy = y_min; yy < (projection_y.y + y_delta); yy += y_delta)
+        {
+            thundercloud mp = thundercloud(new("thundercloud") ).condense_vapor( (xx, yy), self, (x_delta, y_delta) );
+            if(mp)
+                thunder_front.push(mp);
+        }
+
+        //precautionary measures
+        i++;
+        if(i > 10000000000)
+            break;
+    }
+}
+
+sector get_original_sector() const
+{
+    return attached_sectors[0];
+}
+
+
+void get_sectors(out array<sector> it) const
+{
+    it.copy(attached_sectors);
+}
+
+vector2, vector2 get_sector_bounds() const
+{
+    return projection_x, projection_y;
+}
+
+uint return_state() const
+{
+    return cyclon_state;
+}
+protected void set_state(uint b)
+{
+    cyclon_state |= b;
+}
+
+
+private void update_bbox_vertices(vector2 x_x, vector2 y_y)
+{
+    //order dont matter
+    bounds_vertice_1 = (x_x.x, y_y.x);
+    bounds_vertice_2 = (x_x.x, y_y.y);
+    bounds_vertice_3 = (x_x.y, y_y.x);
+    bounds_vertice_4 = (x_x.y, y_y.y);
+    /*
+    actor.spawn("armorbonus", pos:(bounds_vertice_1, 0) );
+    actor.spawn("armorbonus", pos:(bounds_vertice_2, 0) );
+    actor.spawn("armorbonus", pos:(bounds_vertice_3, 0) );
+    actor.spawn("armorbonus", pos:(bounds_vertice_4, 0) );
+    */
+}
+
+void merge_with(sector_cyclon with, weather_event caller)
+{
+    if(caller && with && caller.getclass() == "weather_event")
+    {
+        vector2 proj_x, proj_y;
+        [proj_x, proj_y] = with.get_sector_bounds();
+
+        with.get_sectors(attached_sectors);
+
+        //again, because vectors arrys in zscript is just a dream 
+        if(proj_x.x < projection_x.x)
+            projection_x.x = proj_x.x;
+        if(proj_x.y > projection_x.y)
+            projection_x.y = proj_x.y;
+
+        if(proj_y.x < projection_y.x)
+            projection_y.x = proj_y.x;
+        if(proj_y.y > projection_y.y)
+            projection_y.y = proj_y.y;
+
+        update_bbox_vertices(projection_x, projection_y);
+    }
+}
+
+
+//МУЖЦИКИЙ ДОЖДЬ АЛЛИЛУЯ
+weather_actor raining_men(vector3 v)
+{
+    if(god_of_weather)
+    {
+        weather_actor wa = weather_event(god_of_weather).find_droplet();
+
+        switch(CWE_weather_type)
+        {
+            case CWE_SNOW:
+                wa.setstatelabel("snow");
+            break;
+
+            case CWE_RAIN:
+                wa.setstatelabel("rain");
+            break;
+            
+            default:
+            break;
+        }
+
+        wa.setorigin(v, false);
+    }
+    return null;
+}
+
+override void OnDestroy()
+{
+    for(uint i = 0; i < thunder_front.size(); i++)
+        thunder_front[i].destroy();
+
+    super.ondestroy();
+}
+
+}
+
+enum CWE_TYPE
+{
+    CWE_NONE = 0,
+    CWE_SNOW = 1,
+    CWE_RAIN = 1 << 1
+};

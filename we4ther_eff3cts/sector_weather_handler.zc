@@ -46,7 +46,6 @@ sector_cyclon twist_the_cyclone(array<sector> s, vector2 first, vector2 second, 
     return self;
 }
 
-array<actor> ttt;
 private void sector_thunderclouds()
 {
     double p_dist = interval_between_points * 2;

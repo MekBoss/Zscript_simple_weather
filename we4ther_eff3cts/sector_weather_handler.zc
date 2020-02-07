@@ -16,8 +16,10 @@ private uint timer;
 
 enum cyclon_state_enum
 {
-    CSE_PLAYER_LOOKING = 1,
-    CSE_IN_SUBMISSION = 1 << 1,
+    CSE_NOTHING = 0,
+    CSE_ASHED = 1,
+    CSE_SNOWY = 1 << 1,
+    CSE_RAINY = 1 << 2
 };
 /*
 compare
@@ -173,6 +175,14 @@ weather_actor raining_men(vector3 v)
                 wa.setstatelabel("rain");
             break;
             
+            case CWE_ASHES:
+                wa.setstatelabel("ashes");
+            break;
+
+            case CWE_WTF:
+                wa.setstatelabel("god_what_it_is");
+            break;
+
             default:
             break;
         }
@@ -190,11 +200,88 @@ override void OnDestroy()
     super.ondestroy();
 }
 
+private void check_for_ashes()
+{
+    if(CWE_weather_type == CWE_ASHES && !(cyclon_state & CSE_ASHED) )
+    {
+        cyclon_state |= CSE_ASHED;
+
+        for(uint i = 0; i < attached_sectors.size(); i++)
+        {
+            attached_sectors[i].SetFade(color("C9C9C9") );
+        }
+    }
+
+    if(CWE_weather_type != CWE_ASHES && (cyclon_state & CSE_ASHED) )
+    {
+        cyclon_state &= ~CSE_ASHED;
+
+        for(uint i = 0; i < attached_sectors.size(); i++)
+        {
+            attached_sectors[i].SetFade(color("000000") );
+        }
+    }
+}
+
+private void check_for_snow()
+{
+    if(CWE_weather_type == CWE_SNOW && !(cyclon_state & CSE_SNOWY) )
+    {
+        cyclon_state |= CSE_SNOWY;
+
+        for(uint i = 0; i < attached_sectors.size(); i++)
+        {
+            attached_sectors[i].SetFade(color("f0f0f0") );
+        }
+    }
+
+    if(CWE_weather_type != CWE_SNOW && (cyclon_state & CSE_SNOWY) )
+    {
+        cyclon_state &= ~CSE_SNOWY;
+
+        for(uint i = 0; i < attached_sectors.size(); i++)
+        {
+            attached_sectors[i].SetFade(color("000000") );
+        }
+    }
+}
+
+private void check_for_rain()
+{
+    if(CWE_weather_type == CSE_RAIN && !(cyclon_state & CSE_RAINY) )
+    {
+        cyclon_state |= CSE_RAINY;
+
+        for(uint i = 0; i < attached_sectors.size(); i++)
+        {
+            attached_sectors[i].SetFade(color("b5b5ff") );
+        }
+    }
+
+    if(CWE_weather_type != CSE_RAIN && (cyclon_state & CSE_RAINY) )
+    {
+        cyclon_state &= ~CSE_RAINY;
+
+        for(uint i = 0; i < attached_sectors.size(); i++)
+        {
+            attached_sectors[i].SetFade(color("000000") );
+        }
+    }
+}
+
+override void tick()
+{
+    check_for_ashes();
+}
+
 }
 
 enum CWE_TYPE
 {
-    CWE_NONE = 0,
-    CWE_SNOW = 1,
-    CWE_RAIN = 1 << 1
+    CWE_NONE = 0,//0
+    CWE_SNOW = 1,//1
+    CWE_RAIN = 1 << 1,//2
+ 
+    CWE_ASHES = 1 <<2,//4
+    CWE_WTF = 1 <<16//8
 };

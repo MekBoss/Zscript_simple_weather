@@ -7,6 +7,8 @@ bool is_on_hold() const
     return on_hold;
 }
 
+private int roll_amount;
+
 default
 {
     +nointeraction
@@ -70,6 +72,51 @@ states
                 setstatelabel("cooldown");
         }
     loop;
+
+    ashes:
+        stpk "#" 0
+        {
+            on_hold = false;
+            vel.z -= frandom(7, 12);
+            scale = (0.02, 0.02);
+            frame = random(0, 8);
+
+            bROLLSPRITE = true;
+            bROLLCENTER = true;
+
+            roll_amount = random(-15, 15);
+        }
+    ashes_falling:
+        stpk "#" 1
+        {
+            roll += roll_amount;
+            if(pos.z <= floorz)
+                setstatelabel("cooldown");
+        }
+    loop;
+
+    god_what_it_is:
+        wtft "#" 0
+        {
+            on_hold = false;
+            vel.z -= frandom(7, 12);
+            scale = (0.02, 0.02);
+            frame = random(0, 4);
+
+            bROLLSPRITE = true;
+            bROLLCENTER = true;
+
+            roll_amount = random(-15, 15);
+        }
+    it_falling:
+        wtft "#" 1
+        {
+            roll += roll_amount;
+            if(pos.z <= floorz)
+                setstatelabel("cooldown");
+        }
+    loop;
+    
 
     death:
     cooldown:

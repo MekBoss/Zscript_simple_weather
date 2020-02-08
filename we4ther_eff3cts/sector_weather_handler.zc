@@ -380,7 +380,7 @@ bool turn_on_lighting()
     {
         lighting_time = true;
         timer = random (850, 3000);
-        light_to_sound = random (0, 70);
+        light_to_sound = random (15, 115);
         return true;
     }
 

@@ -1,3 +1,9 @@
+//turns weather on if tru and off if false
 server bool CWE_weather = false;
+//howhow often snow/rain/etc effect spawns, greater numbers means less often 
 server int CWE_intensity = 3;
+//type of a weather; it use bitflags, so only power of two would work as intended, other numbers can bug this
 server int CWE_weather_type = 0;
+
+//debug cvar, set to true to instantly play thunder sound
+server noarchive bool  cwe_thunder_debug = false;

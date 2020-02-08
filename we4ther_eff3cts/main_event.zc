@@ -4,16 +4,38 @@ class weather_event : eventhandler
 //use this function to attach weather to map
 override void worldLoaded(WorldEvent e)
 {
-    /*/
-        use next code block to select map in which you want see/have snow/rain/etc.
-        replace number 11 with number of a map you want
-        and CWE_SNOW with effect you want which is:
-            CWE_NONE nothing at all
+    /*/ //// <- comments starts here
+        next code block are an example of how you should use it
+        to actually use it move it outside of comment block
+        
+        so in next example line "if(level.levelnum == 11)" names condition
+        it checks is current level number is 11
+        if yes, gzdoom executes code in curve brackets
+        number 11 represent number of a level in you map pack
+        changing it to 2, 5, 33 apply weather to level number 2, 5, 33 respectively
+        note, doom 1 like wads, which have ExMy numerations model, obey to the same rule
+        note 2: if you copy code block without it condition, gzdoom apply specific type of weather to ALL maps
+        
+        functions "set_weather();" and "prepeare_droplets();" are a base initializators
+        they should be present in all copies no matter how it looks, since this is how gzdoom work
+
+        line "cvar.findcvar("CWE_weather_type").setint(CWE_SNOW);"
+        sets type of weather you want to see on map
+        currently it set to snow
+        to use another weather replace CWE_SNOW with
+            CWE_NONE for nothing at all
             CWE_SNOW for snow
             CWE_RAIN for rain
+            CWE_ASHES for ashes (looks goofy)
 
-        in other words, if you move next code block outside of the comment
+        in short, if you move next code block outside of the comment
         it start spawning snow in all sectors which have "sky ceiling" on map 11
+        anoither note, gzdoom dont care about order here, so you can
+        if(level.levelnum == 154) {.....}
+        goes before
+        if(level.levelnum == 18) {.....}
+    
+    ***code block mentioned above, start copy it from next line***
     
     if(level.levelnum == 11)
     {
@@ -22,7 +44,15 @@ override void worldLoaded(WorldEvent e)
 
         cvar.findcvar("CWE_weather_type").setint(CWE_SNOW);
     }
-    /*/
+    
+    ***to the above line***
+
+    /*/ //// <- comment ends here
+    //copy block down below, but put it above next } bracket
+
+
+
+
 }
 
 
@@ -31,12 +61,14 @@ private array<weather_actor> precipitation;
 //and all thinkers which "spawn" them
 private array<sector_cyclon> hurricanes;
 
+//check sector ceiling texture and return true if it SKY1
 static bool sector_with_sky(sector s)
 {
     bool i = s.getTexture(Sector.ceiling) == TexMan.checkForTexture("F_SKY1", TexMan.Type_Any);
     return i;
 }
 
+//compute bounding pox of a sector (minimal described rectangular)
 private vector2, vector2 get_sector_bounding_box(sector s)
 {
     vector2 x_axis, y_axis;
@@ -73,6 +105,7 @@ private vector2, vector2 get_sector_bounding_box(sector s)
 }
 
 //should be called from world loaded
+//init weather base code
 private void set_weather()
 {
     array<sector> processed_sectors; processed_sectors.clear();
@@ -119,7 +152,7 @@ private void set_weather()
             }
         }
 
-
+        //calculate bbox here
         Vector2 bbox_x, bbox_y, temp_bbox_x, temp_bbox_y;
         bbox_x = bbox_y = (double.infinity, -double.infinity);
 
@@ -162,7 +195,7 @@ weather_actor find_droplet() const
     return null;
 }
 
-//precache some of the effects
+//precache some of the effects at the beginning of a map
 private void prepeare_droplets()
 {
     for(uint i = 0; i < 100; i ++)
@@ -203,7 +236,7 @@ private sector_cyclon find_cyclon_by_sector(sector s)
     return null;
 }
 
-//attach neighby thinkers into cluster, to decrease amount of "is player looks" checks
+//attach nearby thinkers/sectors with SKY1 ceiling into cluster, to decrease amount of "is player looks" checks
 private void merge_neighborn_thinkers()
 {
     //for all thinkers in list

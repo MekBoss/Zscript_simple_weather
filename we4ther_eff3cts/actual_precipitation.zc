@@ -1,3 +1,4 @@
+//thing that shon as rain/snow/etc.
 class weather_actor : actor
 {
 private bool on_hold;
@@ -12,7 +13,7 @@ private int roll_amount;
 default
 {
     +nointeraction
-    //+noclip
+    +noclip
     
     mass 100;
     radius 5;
@@ -28,7 +29,7 @@ states
     snfl a 0;
 
     spawn:
-        tnt1 a 1;
+        tnt1 a -1;
     stop;
 
     rain:
@@ -37,8 +38,8 @@ states
             on_hold = false;
             vel.z -= 1;
             A_SetRenderStyle(0.6, STYLE_translucent);
-            scale = (0.004, 0.015);
-            vel.z = -frandom(10, 18);
+            scale = (0.003, 0.008);
+            vel.z = -frandom(20, 30);
         }
     rain_falling:
         wtdl a 1

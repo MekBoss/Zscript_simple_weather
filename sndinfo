@@ -1,1 +1,24 @@
-energ "sounds/energia.mp3"
+thunder_sound_1 "sounds/Lighting_Strike_1.ogg"
+thunder_sound_2 "sounds/Lighting_Strike_2.ogg"
+thunder_sound_3 "sounds/Lighting_Strike_3.ogg"
+thunder_sound_4 "sounds/Lighting_Strike_4.ogg"
+thunder_sound_5 "sounds/Lighting_Strike_5.ogg"
+thunder_sound_6 "sounds/Lighting_Strike_6.ogg"
+thunder_sound_7 "sounds/Lighting_Strike_7.ogg"
+thunder_sound_8 "sounds/Lighting_Strike_8.ogg"
+
+$random thunder_sound_random
+{
+    thunder_sound_1
+    thunder_sound_2
+    thunder_sound_3
+    thunder_sound_4
+    thunder_sound_5
+    thunder_sound_6
+    thunder_sound_7
+    thunder_sound_8
+}
+
+$attenuation thunder_sound_random 0.3
+
+$rolloff thunder_sound_random linear 1500 4000

@@ -26,7 +26,7 @@ override void worldLoaded(WorldEvent e)
             CWE_NONE for nothing at all
             CWE_SNOW for snow
             CWE_RAIN for rain
-            CWE_ASHES for ashes (looks goofy)
+            CWE_ASHES for ashes (looks goofy for now)
 
         in short, if you move next code block outside of the comment
         it start spawning snow in all sectors which have "sky ceiling" on map 11

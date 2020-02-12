@@ -39,8 +39,6 @@ override void worldLoaded(WorldEvent e)
     
     if(level.levelnum == 11)
     {
-        set_weather();
-        prepeare_droplets();
 
         cvar.findcvar("CWE_weather_type").setint(CWE_SNOW);
     }
@@ -49,12 +47,30 @@ override void worldLoaded(WorldEvent e)
 
     /*/ //// <- comment ends here
     //copy block down below, but put it above next } bracket
+        set_weather();
+        prepeare_droplets();
 
 
 
 
 }
 
+private void attach_rain_sound_to_player()
+{
+    for (int i = 0; i < MAXPLAYERS; i++)
+    {
+        PlayerInfo p = players[i];
+        
+        if(playeringame[i] && p)
+        {
+            //actor m = actor.spawn("rain_sound_speaker", pos:(sector_center, 0) );
+            //m.setorigin( (m.pos.xy, m.floorz), false);
+
+            //rain_sound_speaker(m).attach_to_player(p, self);
+            //rain_speakers_per_player.push(m);
+        }
+    }
+}
 
 //store here all effects
 private array<weather_actor> precipitation;

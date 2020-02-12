@@ -19,6 +19,8 @@ private cyclon_state_enum cyclon_state;
 private array<thundercloud> thunder_front;
 //speaker for thunder sound
 private actor weather_sound;
+//array of all speakers assigned to specific player
+private array<actor> rain_speakers_per_player;
 
 enum cyclon_state_enum
 {
@@ -51,12 +53,43 @@ sector_cyclon twist_the_cyclone(array<sector> s, vector2 first, vector2 second, 
         
         time = level.totaltime;
 
-        weather_sound = actor.spawn("thunder_and_lighting", pos:( (projection_x.x + projection_x.y, projection_y.x + projection_y.y) / 2, 0 )  );
+        vector2 sector_center = ( (projection_x.x + projection_x.y, projection_y.x + projection_y.y) / 2 );
+
+        weather_sound = actor.spawn("thunder_and_lighting", pos:( sector_center , 0 )  );
     
         weather_sound.setorigin( (weather_sound.pos.xy, weather_sound.ceilingz), false);
-    }
+    
+        for (int i = 0; i < MAXPLAYERS; i++)
+        {
+            PlayerInfo p = players[i];
+            
+            if(playeringame[i] && p)
+            {
+                actor m = actor.spawn("rain_sound_speaker", pos:(sector_center, 0) );
+                m.setorigin( (m.pos.xy, m.floorz), false);
 
+                rain_sound_speaker(m).attach_to_player(p, self);
+                rain_speakers_per_player.push(m);
+            }
+        }
+    }
     return self;
+}
+
+bool sector_from_group(sector s)
+{
+    if(s)
+    {
+        for(uint i = 0; i < attached_sectors.size(); i++)
+        {
+            if(attached_sectors[i] && attached_sectors[i] == s )
+            {
+                return true;
+                break;
+            }
+        }
+    }
+    return false;
 }
 
 //fill all sector gropu with weather spawn points
@@ -213,6 +246,9 @@ override void OnDestroy()
     for(uint i = 0; i < thunder_front.size(); i++)
         thunder_front[i].destroy();
 
+    for(uint i = 0; i < rain_speakers_per_player.size(); i++)
+        rain_speakers_per_player[i].destroy();
+    
     super.ondestroy();
 }
 
@@ -356,8 +392,7 @@ enum CWE_TYPE
     CWE_WTF = 1 <<16//8
 };
 
-//speaker class for thunder sound
-class thunder_and_lighting : actor
+class base_weather_speaker : actor
 {
 default
 {
@@ -366,9 +401,24 @@ default
     +nosector
 }
 
+}
+
+//speaker class for thunder sound
+class thunder_and_lighting : base_weather_speaker
+{
+
 override void MarkPrecacheSounds()
 {
-    MarkSound("thunder_sound_random");
+    //MarkSound("thunder_sound_random");
+    MarkSound("thunder_sound_1");
+    MarkSound("thunder_sound_2");
+    MarkSound("thunder_sound_3");
+    MarkSound("thunder_sound_4");
+    MarkSound("thunder_sound_5");
+    MarkSound("thunder_sound_6");
+    MarkSound("thunder_sound_7");
+    MarkSound("thunder_sound_8");
+
 }
 
 private uint timer, light_to_sound;
@@ -380,7 +430,7 @@ bool turn_on_lighting()
     {
         lighting_time = true;
         timer = random (850, 3000);
-        light_to_sound = random (15, 115);
+        light_to_sound = random (15, 215);
         return true;
     }
 
@@ -412,6 +462,99 @@ states
             {
                 a_playsound("thunder_sound_random", CHAN_AUTO, 1);
                 cvar.findcvar("cwe_thunder_debug").setint(0);
+            }
+        }
+    loop;
+}
+
+}
+
+class rain_sound_speaker : base_weather_speaker
+{
+private playerinfo player_target;
+private sector_cyclon group_affiliation;
+private textureid sky_texture;
+
+void attach_to_player(playerinfo i, sector_cyclon g)
+{
+    player_target = i;
+    group_affiliation = g;
+    sky_texture = TexMan.checkForTexture("F_SKY1", TexMan.Type_Any);
+}
+
+override void MarkPrecacheSounds()
+{
+    MarkSound("rain_sound_random");
+}
+
+private vector3 almost_unit_vector(vector3 v)
+{
+    double divv = 0;
+    if(abs(v.x) >= abs(v.y) && abs(v.x) >= abs(v.z) )
+        divv = abs(v.x);
+    if(abs(v.y) >= abs(v.x) && abs(v.y) >= abs(v.z) )
+        divv = abs(v.y);
+    if(abs(v.z) >= abs(v.y) && abs(v.z) >= abs(v.x) )
+        divv = abs(v.z);
+
+    v /= divv;
+
+    return v;
+}
+
+private bool is_own_sector_group(sector s)
+{
+    if(group_affiliation)
+    {
+        return sector_cyclon(group_affiliation).sector_from_group(s);
+    }
+    return false;
+}
+
+states
+{
+    spawn:
+        bon2 a 1 nodelay
+        {
+            //console.printf("pos %f %f %f", pos.x, pos.y, pos.z);
+            if(!CWE_rain_sound)
+            {
+                console.printf("cvar false");
+                return;
+            }
+
+            a_playsound("rain_sound_1", CHAN_BODY|CHAN_NOSTOP , 1);
+
+            if(!player_target)
+            {
+                console.printf("no player");
+                return;            
+            }
+
+
+            PlayerInfo p = player_target;
+
+            vector3 move_dir = level.vec3diff(pos, p.camera.pos);
+            if(p.camera.cursector.getTexture(Sector.ceiling) == sky_texture )
+            {
+                if(move_dir dot move_dir < 50 * 50 || is_own_sector_group(p.camera.cursector) )
+                {
+                    setorigin(p.camera.pos, false);
+                    return;
+                }
+            }
+
+            move_dir = almost_unit_vector(move_dir);
+
+            move_dir *= 10;
+
+            vector3 old_position = pos;
+
+            setorigin(pos + move_dir, false);
+
+            if(! (cursector.getTexture(Sector.ceiling) == TexMan.checkForTexture("F_SKY1", TexMan.Type_Any) ) )
+            {
+                setorigin(old_position, false);
             }
         }
     loop;

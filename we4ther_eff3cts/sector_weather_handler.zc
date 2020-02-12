@@ -68,7 +68,7 @@ sector_cyclon twist_the_cyclone(array<sector> s, vector2 first, vector2 second, 
                 actor m = actor.spawn("rain_sound_speaker", pos:(sector_center, 0) );
                 m.setorigin( (m.pos.xy, m.floorz), false);
 
-                rain_sound_speaker(m).attach_to_player(p, self);
+                rain_sound_speaker(m).attach_to_player(p, self, sector_center);
                 rain_speakers_per_player.push(m);
             }
         }
@@ -252,6 +252,26 @@ override void OnDestroy()
     super.ondestroy();
 }
 
+//check is player near/inside sector group bbox
+private bool inside_sector_bbox(actor a)
+{
+    if(!a)
+        return false;
+
+    double x_len, y_len;
+
+    x_len = (projection_x.y - projection_x.x) / 2;
+    y_len = (projection_y.y - projection_y.x) / 2;
+       
+    if( a.pos.x > projection_x.x - x_len &&
+        a.pos.x < projection_x.y + x_len &&
+        a.pos.y > projection_y.x - y_len &&
+        a.pos.y < projection_y.y + y_len )
+        return true; 
+
+    return false;
+}
+
 //next functions apply more specific effects on specific weather
 private void check_for_ashes()
 {
@@ -324,25 +344,6 @@ private void check_for_rain()
     try_lighting();
 }
 
-//check is player near/inside sector group bbox
-private bool inside_sector_bbox(actor a)
-{
-    if(!a)
-        return false;
-
-    double x_len, y_len;
-
-    x_len = (projection_x.y - projection_x.x) / 2;
-    y_len = (projection_y.y - projection_y.x) / 2;
-       
-    if( a.pos.x > projection_x.x - x_len &&
-        a.pos.x < projection_x.y + x_len &&
-        a.pos.y > projection_y.x - y_len &&
-        a.pos.y < projection_y.y + y_len )
-        return true; 
-
-    return false;
-}
 
 //bright flash from lighting
 private void lighting_bright_flash()
@@ -376,6 +377,7 @@ override void tick()
     if(!CWE_weather || globalfreeze) return;
 
     check_for_ashes();
+    check_for_snow();
     try_lighting();
 }
 
@@ -474,12 +476,14 @@ class rain_sound_speaker : base_weather_speaker
 private playerinfo player_target;
 private sector_cyclon group_affiliation;
 private textureid sky_texture;
+private vector2 group_center;
 
-void attach_to_player(playerinfo i, sector_cyclon g)
+void attach_to_player(playerinfo i, sector_cyclon g, vector2 v)
 {
     player_target = i;
     group_affiliation = g;
     sky_texture = TexMan.checkForTexture("F_SKY1", TexMan.Type_Any);
+    group_center = v;
 }
 
 override void MarkPrecacheSounds()
@@ -519,7 +523,7 @@ states
             //console.printf("pos %f %f %f", pos.x, pos.y, pos.z);
             if(!CWE_rain_sound)
             {
-                console.printf("cvar false");
+                //console.printf("cvar false");
                 return;
             }
 
@@ -527,14 +531,18 @@ states
 
             if(!player_target)
             {
-                console.printf("no player");
+                //console.printf("no player");
+                a_stopsound(CHAN_BODY);
+                destroy();
                 return;            
             }
 
 
             PlayerInfo p = player_target;
 
-            vector3 move_dir = level.vec3diff(pos, p.camera.pos);
+            vector3 move_dir = p.camera.pos - pos;
+            //portal aware way
+            //level.vec3diff(pos, p.camera.pos);
             if(p.camera.cursector.getTexture(Sector.ceiling) == sky_texture )
             {
                 if(move_dir dot move_dir < 50 * 50 || is_own_sector_group(p.camera.cursector) )
@@ -554,7 +562,8 @@ states
 
             if(! (cursector.getTexture(Sector.ceiling) == TexMan.checkForTexture("F_SKY1", TexMan.Type_Any) ) )
             {
-                setorigin(old_position, false);
+                //to prevent stucking in walls
+                setorigin(old_position + (almost_unit_vector( (group_center,0) - old_position) * 10), false);
             }
         }
     loop;

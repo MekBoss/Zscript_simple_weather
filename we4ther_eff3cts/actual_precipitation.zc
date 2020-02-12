@@ -39,7 +39,7 @@ states
             vel.z -= 1;
             A_SetRenderStyle(0.6, STYLE_translucent);
             scale = (0.003, 0.008);
-            vel.z = -frandom(20, 30);
+            vel.z = -frandom(20, 40);
         }
     rain_falling:
         wtdl a 1

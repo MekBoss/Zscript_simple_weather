@@ -22,13 +22,6 @@ $random thunder_sound_random
 $attenuation thunder_sound_random 0.3
 $rolloff thunder_sound_random linear 1500 4000
 
-rain_sound_1 "sounds/rain_sound.ogg"
-$rolloff rain_sound_1 linear 150 400
+rain_sound "sounds/rain_sound.ogg"
 
-rain_sound_2 "sounds/rain_sound.ogg"
-
-$random rain_sound_random
-{
-    rain_sound_1
-    rain_sound_2
-}		
+$rolloff rain_sound linear 150 400

@@ -484,7 +484,7 @@ void attach_to_player(playerinfo i, sector_cyclon g)
 
 override void MarkPrecacheSounds()
 {
-    MarkSound("rain_sound_random");
+    MarkSound("rain_sound");
 }
 
 private vector3 almost_unit_vector(vector3 v)
@@ -523,7 +523,7 @@ states
                 return;
             }
 
-            a_playsound("rain_sound_1", CHAN_BODY|CHAN_NOSTOP , 1);
+            a_playsound("rain_sound", CHAN_BODY|CHAN_NOSTOP , 1, true);
 
             if(!player_target)
             {

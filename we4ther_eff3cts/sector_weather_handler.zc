@@ -493,7 +493,14 @@ override void MarkPrecacheSounds()
 
 private vector3 almost_unit_vector(vector3 v)
 {
-    double divv = 0;
+    if(v == (0, 0, 0) )
+        return v;//obvious
+
+    if(v != v)
+        return (0, 0, 0);//case with NaN or infinity
+
+    double divv = 1;//division by zero prevented
+
     if(abs(v.x) >= abs(v.y) && abs(v.x) >= abs(v.z) )
         divv = abs(v.x);
     if(abs(v.y) >= abs(v.x) && abs(v.y) >= abs(v.z) )

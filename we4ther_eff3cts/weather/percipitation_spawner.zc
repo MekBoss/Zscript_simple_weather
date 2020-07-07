@@ -34,7 +34,7 @@ thundercloud condense_vapor(vector2 v, sector_cyclon it, vector2 d)
     return self;
 }
 
-//check is player near weather spawning point
+//check is any player near weather spawning point
 private bool player_nearby()
 {
     bool is_looking = false;
@@ -59,7 +59,7 @@ private bool player_nearby()
 //tic-tac tic-tac tic-tac.....
 override void tick()
 {
-    if(!CWE_weather || globalfreeze) return;
+    if(!CWE_weather || globalfreeze) return;//if level is frozen return to not spawn >90000 weather actors
 
     timer ++;
     

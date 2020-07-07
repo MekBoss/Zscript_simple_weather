@@ -1,0 +1,31 @@
+/*
+this file defines weather type for a specific map
+
+To define weather for specific map you should use
+map "level number"
+{
+    weather = snow/rain/ash; <- semicolon at the end important!!!!!
+    intensity = number from 0 to 10;
+}
+
+for doom 2 first map level number equal to 1, since its the first map
+
+intensity is time between spawning of new weather actors in tick
+(greater numbers increase delaym smaler reduce)
+
+
+next example set snow for any first map and rain for any second map of any wad
+in all sectors which have sky "ceiling"
+*/
+
+map 1
+{
+    weather = snow;
+    intensity = 1;
+}
+
+map 3
+{
+    weather = rain;
+    intensity = 10;
+}

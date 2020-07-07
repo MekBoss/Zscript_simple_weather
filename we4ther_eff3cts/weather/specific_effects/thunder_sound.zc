@@ -1,0 +1,69 @@
+
+//speaker class for thunder sound
+class thunder_and_lighting : base_weather_speaker
+{
+
+override void MarkPrecacheSounds()
+{
+    MarkSound("thunder_sound_1");
+    MarkSound("thunder_sound_2");
+    MarkSound("thunder_sound_3");
+    MarkSound("thunder_sound_4");
+    MarkSound("thunder_sound_5");
+    MarkSound("thunder_sound_6");
+    MarkSound("thunder_sound_7");
+    MarkSound("thunder_sound_8");
+
+}
+//for preventing multiple thunder sounds in one tick
+private int cooldown_timer;
+//delay between lighting flash and thunder sound, because sound have much cmaller speed than light
+private int light_to_sound;
+//flag that it actually should play thunder.mp3 (ogg actually)
+private bool lighting_time;
+
+bool turn_on_lighting()
+{
+    if(cooldown_timer <= 0)
+    {
+        lighting_time = true;
+        cooldown_timer = random (850, 3000);
+        light_to_sound = random (35, 215);
+        return true;
+    }
+
+    else return false;
+}
+
+states
+{
+    spawn:
+        bon1 a 1 nodelay
+        {
+            //console.printf("cooldown_timer %i light %i", cooldown_timer, light_to_sound);
+            if(cooldown_timer > 0)
+                cooldown_timer --;
+
+            if(light_to_sound > 0)
+            {
+                light_to_sound--;
+
+                if( lighting_time == true && light_to_sound <= 0)
+                {
+                    lighting_time = false;
+
+                    //console.printf("thunder");
+                    a_playsound("thunder_sound_random", CHAN_AUTO, 1);
+                }
+            }
+
+            if(cwe_thunder_debug)
+            {
+                a_playsound("thunder_sound_random", CHAN_AUTO, 1);
+                cvar.findcvar("cwe_thunder_debug").setint(0);
+            }
+        }
+    loop;
+}
+
+}

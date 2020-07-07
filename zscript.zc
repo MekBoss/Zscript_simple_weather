@@ -1,15 +1,5 @@
 //minimum version number which have function to check is point on map inside sector or no
 version "3.5"
 
-//initialize weather sequence
-//to apply specific weather to specific map go to this file
-#include "we4ther_eff3cts/main_event.zc"
 
-//next files are important, since its how all system works "under the hood"
-//change something there only if you REALLY know what you are doing
-//control weather inside sector
-#include "we4ther_eff3cts/sector_weather_handler.zc"
-//spawner of a snow/rain/etc.
-#include "we4ther_eff3cts/percipitation_spawner.zc"
-//actual thing which actually shows as snow/rain/etc
-#include "we4ther_eff3cts/actual_precipitation.zc"
+#include "we4ther_eff3cts/includer.zc"

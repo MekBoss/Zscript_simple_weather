@@ -1,4 +1,4 @@
-//thing that shon as rain/snow/etc.
+//thing that shown as rain/snow/etc
 class weather_actor : actor
 {
 private bool on_hold;
@@ -15,16 +15,13 @@ default
     +nointeraction
     +noclip
     
-    mass 100;
     radius 5;
     height 5;
     scale 0.1;
-
 }
 
 states
 {
-
     //loading snowflkes sprites
     snfl a 0;
 
@@ -36,7 +33,6 @@ states
         wtdl a 1
         {
             on_hold = false;
-            vel.z -= 1;
             A_SetRenderStyle(0.6, STYLE_translucent);
             scale = (0.003, 0.008);
             vel.z = -frandom(20, 40);
@@ -54,7 +50,7 @@ states
         {
             on_hold = false;
             vel.z -= frandom(3.5, 5.5);
-            scale = (0.02, 0.02);
+            scale = (0.04, 0.04);
             frame = random(0, 8);
             A_SetRenderStyle(1, STYLE_translucent);
         

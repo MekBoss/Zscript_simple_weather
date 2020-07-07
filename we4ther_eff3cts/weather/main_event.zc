@@ -29,6 +29,11 @@ override void worldLoaded(WorldEvent e)
                 prepeare_droplets();
                 cvar.findcvar("CWE_weather_type").setint(weather_thing.weather_type);
                 cvar.findcvar("CWE_intensity").setint(weather_thing.intensity);
+
+                if(weather_thing.weather_type != CWE_RAIN)
+                    cvar.findcvar("CWE_rain_sound").setint(0);
+                else
+                    cvar.findcvar("CWE_rain_sound").setint(1);
             }
         }
     }

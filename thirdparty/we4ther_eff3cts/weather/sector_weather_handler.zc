@@ -1,0 +1,412 @@
+const interval_between_points = 150;
+
+class sector_cyclon : thinker
+    {
+    //pointer to main event which create it and have array of all weather actors
+    private weather_event god_of_weather;
+    //all sectors attached to it
+    private array<sector> attached_sectors;
+    //bbox pojection on x y axis
+    private vector2 projection_x, projection_y;
+    //same as bbox, but already in 2d vector form
+    private vector2 bounds_vertice_1, bounds_vertice_2, bounds_vertice_3, bounds_vertice_4;
+    //technical value to prevent abusing of public init function
+    private uint time;
+
+    //state of a sector group
+    private cyclon_state_enum cyclon_state;
+    //all weather spawnpoints
+    private array<thundercloud> thunder_front;
+    //speaker for thunder sound
+    private actor weather_sound;
+    //array of all speakers assigned to specific player
+    private array<actor> rain_speakers_per_player;
+
+    enum cyclon_state_enum
+    {
+        CSE_NOTHING = 0,
+        CSE_ASHED = 1,
+        CSE_SNOWY = 1 << 1,
+        CSE_RAINY = 1 << 2
+    };
+    /*
+    compare
+        &
+    unset
+        &= ~
+    set
+        |=
+    */
+
+    //init function / constructor
+    sector_cyclon twist_the_cyclone(array<sector> s, vector2 first, vector2 second, weather_event it)
+    {
+        if(time == 0)
+        {
+            attached_sectors.copy(s);
+            god_of_weather = it;
+            projection_x = first;
+            projection_y = second;
+
+            update_bbox_vertices(projection_x, projection_y);
+            sector_thunderclouds();
+            
+            time = level.totaltime;
+
+            vector2 sector_center = ( (projection_x.x + projection_x.y, projection_y.x + projection_y.y) / 2 );
+
+            weather_sound = actor.spawn("thunder_and_lighting", pos:( sector_center , 0 )  );
+        
+            weather_sound.setorigin( (weather_sound.pos.xy, weather_sound.ceilingz), false);
+        
+            for (int i = 0; i < MAXPLAYERS; i++)
+            {
+                PlayerInfo p = players[i];
+                
+                if(playeringame[i] && p)
+                {
+                    actor m = actor.spawn("rain_sound_speaker", pos:(sector_center, 0) );
+                    m.setorigin( (m.pos.xy, m.floorz), false);
+
+                    rain_sound_speaker(m).attach_to_player(p, self, sector_center);
+                    rain_speakers_per_player.push(m);
+                }
+            }
+        }
+        return self;
+    }
+
+    bool sector_from_group(sector s)
+    {
+        if(s)
+        {
+            for(uint i = 0; i < attached_sectors.size(); i++)
+            {
+                if(attached_sectors[i] && attached_sectors[i] == s )
+                {
+                    return true;
+                    break;
+                }
+            }
+        }
+        return false;
+    }
+
+    //fill all sector gropu with weather spawn points
+    private void sector_thunderclouds()
+    {
+        double p_dist = interval_between_points * 2;
+
+        double x_length, y_length, x_delta, y_delta;
+        int _x_, _y_;
+        uint i = 0;
+
+        x_length = projection_x.y - projection_x.y;
+        y_length = projection_y.y - projection_y.y;
+
+        x_delta = x_length / p_dist;
+        y_delta = y_length / p_dist;
+    
+        _x_ = int(x_delta);
+        _y_ = int(y_delta);
+
+        if(abs(_x_) > 0)
+            x_delta = abs( ( ( (x_delta - _x_) / _x_) * p_dist ) );
+        if(abs(_y_) > 0)
+            y_delta = abs( ( ( (y_delta - _y_) / _y_) * p_dist ) );
+
+        x_delta += p_dist;
+        y_delta += p_dist;
+
+        double x_min = projection_x.x + interval_between_points;
+        double y_min = projection_y.x + interval_between_points;
+
+        for(double xx = x_min; xx < (projection_x.y + x_delta); xx += x_delta)
+        {
+            for(double yy = y_min; yy < (projection_y.y + y_delta); yy += y_delta)
+            {
+                thundercloud mp = thundercloud(new("thundercloud") ).condense_vapor( (xx, yy), self, (x_delta, y_delta) );
+                if(mp)
+                    thunder_front.push(mp);
+            }
+
+            //precautionary measures
+            i++;
+            if(i > 10000000)
+                break;
+        }
+    }
+
+    //technical method used in initialization inside event, return first attached sector
+    sector get_original_sector() const
+    {
+        return attached_sectors[0];
+    }
+
+    //same as above, but return all attached sectors
+    void get_sectors(out array<sector> it) const
+    {
+        it.copy(attached_sectors);
+    }
+
+    //obviou from name
+    vector2, vector2 get_sector_bounds() const
+    {
+        return projection_x, projection_y;
+    }
+    //state of a cyclon thinker
+    uint return_state() const
+    {
+        return cyclon_state;
+    }
+    protected void set_state(uint b)
+    {
+        cyclon_state |= b;
+    }
+
+    //update stored bbox using new set of data
+    private void update_bbox_vertices(vector2 x_x, vector2 y_y)
+    {
+        //order dont matter
+        bounds_vertice_1 = (x_x.x, y_y.x);
+        bounds_vertice_2 = (x_x.x, y_y.y);
+        bounds_vertice_3 = (x_x.y, y_y.x);
+        bounds_vertice_4 = (x_x.y, y_y.y);
+        /*
+        actor.spawn("armorbonus", pos:(bounds_vertice_1, 0) );
+        actor.spawn("armorbonus", pos:(bounds_vertice_2, 0) );
+        actor.spawn("armorbonus", pos:(bounds_vertice_3, 0) );
+        actor.spawn("armorbonus", pos:(bounds_vertice_4, 0) );
+        */
+    }
+
+    //technical stuff for initialization and/or merging two thinkers together
+    void merge_with(sector_cyclon with, weather_event caller)
+    {
+        if(caller && with && caller.getclass() == "weather_event")
+        {
+            vector2 proj_x, proj_y;
+            [proj_x, proj_y] = with.get_sector_bounds();
+
+            with.get_sectors(attached_sectors);
+
+            //again, because vectors arrys in zscript is just a dream 
+            if(proj_x.x < projection_x.x)
+                projection_x.x = proj_x.x;
+            if(proj_x.y > projection_x.y)
+                projection_x.y = proj_x.y;
+
+            if(proj_y.x < projection_y.x)
+                projection_y.x = proj_y.x;
+            if(proj_y.y > projection_y.y)
+                projection_y.y = proj_y.y;
+
+            update_bbox_vertices(projection_x, projection_y);
+        }
+    }
+
+
+    //МУЖЦИКИЙ ДОЖДЬ АЛЛИЛУЯ
+    //АЛИЛУЯ ДОЖДЬ ИЗ МУЖИКОВ
+    weather_actor raining_men(vector3 v)
+    {
+        console.printf("rainig man");
+        if(god_of_weather)
+        {
+            weather_actor wa = weather_event(god_of_weather).find_droplet();
+
+            if(wa)
+                console.printf("unused rain droplet");
+            switch(CWE_weather_type)
+            {
+                case CWE_SNOW:
+                    wa.setstatelabel("snow");
+                break;
+
+                case CWE_RAIN:
+                    wa.setstatelabel("rain");
+                break;
+                
+                case CWE_ASH:
+                    wa.setstatelabel("ashes");
+                break;
+
+                case CWE_WTF:
+                    wa.setstatelabel("god_what_it_is");
+                break;
+
+                default:
+                break;
+            }
+
+            wa.setorigin(v, false);
+        }
+        return null;
+    }
+
+    //deconstructor
+    override void OnDestroy()
+    {
+        for(uint i = 0; i < thunder_front.size(); i++)
+            thunder_front[i].destroy();
+
+        for(uint i = 0; i < rain_speakers_per_player.size(); i++)
+            rain_speakers_per_player[i].destroy();
+        
+        super.ondestroy();
+    }
+
+    //check is player near/inside sector group bbox
+    private bool inside_sector_bbox(actor a)
+    {
+        if(!a)
+            return false;
+
+        double x_len, y_len;
+
+        x_len = (projection_x.y - projection_x.x) / 2;
+        y_len = (projection_y.y - projection_y.x) / 2;
+        
+        if( a.pos.x > projection_x.x - x_len &&
+            a.pos.x < projection_x.y + x_len &&
+            a.pos.y > projection_y.x - y_len &&
+            a.pos.y < projection_y.y + y_len )
+            return true; 
+
+        return false;
+    }
+
+    //next functions apply more specific effects on specific weather
+    private void check_for_ashes()
+    {
+        if(CWE_weather_type == CWE_ASH && !(cyclon_state & CSE_ASHED) )
+        {
+            cyclon_state |= CSE_ASHED;
+
+            for(uint i = 0; i < attached_sectors.size(); i++)
+            {
+                attached_sectors[i].SetFade(color("C9C9C9") );
+            }
+        }
+
+        if(CWE_weather_type != CWE_ASH && (cyclon_state & CSE_ASHED) )
+        {
+            cyclon_state &= ~CSE_ASHED;
+
+            for(uint i = 0; i < attached_sectors.size(); i++)
+            {
+                attached_sectors[i].SetFade(color("000000") );
+            }
+        }
+    }
+
+    private void check_for_snow()
+    {
+        if(CWE_weather_type == CWE_SNOW && !(cyclon_state & CSE_SNOWY) )
+        {
+            cyclon_state |= CSE_SNOWY;
+
+            for(uint i = 0; i < attached_sectors.size(); i++)
+            {
+                attached_sectors[i].SetFade(color("f0f0f0") );
+            }
+        }
+
+        if(CWE_weather_type != CWE_SNOW && (cyclon_state & CSE_SNOWY) )
+        {
+            cyclon_state &= ~CSE_SNOWY;
+
+            for(uint i = 0; i < attached_sectors.size(); i++)
+            {
+                attached_sectors[i].SetFade(color("000000") );
+            }
+        }
+    }
+
+    private void check_for_rain()
+    {
+        if(CWE_weather_type == CWE_RAIN && !(cyclon_state & CSE_RAINY) )
+        {
+            cyclon_state |= CSE_RAINY;
+
+            for(uint i = 0; i < attached_sectors.size(); i++)
+            {
+                attached_sectors[i].SetFade(color("b5b5ff") );
+            }
+        }
+
+        if(CWE_weather_type != CWE_RAIN && (cyclon_state & CSE_RAINY) )
+        {
+            cyclon_state &= ~CSE_RAINY;
+
+            for(uint i = 0; i < attached_sectors.size(); i++)
+            {
+                attached_sectors[i].SetFade(color("000000") );
+            }
+        }
+
+        try_lighting();
+    }
+
+
+    //bright flash from lighting
+    //happens before thundser sound
+    private void lighting_bright_flash()
+    {
+        for(int i = 0; i < MAXPLAYERS; i++)
+        {
+            PlayerInfo p = players[i];
+            
+        if(inside_sector_bbox(p.mo) )
+        {
+                p.mo.a_setblend("FF, FF, FF", 1, 10);
+        }
+        }
+    }
+
+    private void try_lighting()
+    {
+        if(CWE_weather_type == CWE_RAIN)
+        {
+            if(random(0, 500) <= 1 && weather_sound) 
+            {
+                if(thunder_and_lighting(weather_sound).turn_on_lighting() )
+                    lighting_bright_flash();
+            }
+        }
+    }
+
+    //tic-tac, tic-tac, tic-tac.....
+    override void tick()
+    {
+        if(!CWE_weather || globalfreeze) return;
+
+        check_for_ashes();
+        check_for_snow();
+        try_lighting();
+    }
+
+}
+
+//global enums for weather type
+enum CWE_TYPE
+{
+    CWE_NONE = 0,//0
+    CWE_SNOW = 1,//1
+    CWE_RAIN = 1 << 1,//2
+    CWE_ASH = 1 <<2,//4
+
+    CWE_WTF = 1 <<16//8
+};
+
+class base_weather_speaker : actor
+{
+    default
+    {
+        +nointeraction
+        +noclip
+        //+nosector
+        +NOTONAUTOMAP
+    }
+
+}

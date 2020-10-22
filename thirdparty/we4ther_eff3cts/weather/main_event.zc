@@ -1,0 +1,266 @@
+//base event
+class weather_event : eventhandler
+    {
+    private array<parsed_weather> maps_weather;
+    //read weatdef lump and construct from it actual weather definition
+    override void onregister()
+    {
+        array<string> data; data.clear();
+
+        c_like_parser p = c_like_parser(new("c_like_parser") );
+        c_like_parser(p).read_lump("WEATHDEF", data);
+
+        weather_definition wd = weather_definition(new("weather_definition") );
+        weather_definition(wd).create_weather(data, maps_weather);
+    }
+
+
+    override void worldLoaded(WorldEvent e)
+    {
+        for(uint i = 0; i < maps_weather.size(); i++)
+        {
+            if(maps_weather[i])
+            {
+                let weather_thing = parsed_weather(maps_weather[i]);
+            
+                if(weather_thing.level_number == level.levelnum)
+                {
+                    set_weather();
+                    prepeare_droplets();
+                    cvar.findcvar("CWE_weather_type").setint(weather_thing.weather_type);
+                    cvar.findcvar("CWE_intensity").setint(weather_thing.intensity);
+
+                    if(weather_thing.weather_type != CWE_RAIN)
+                        cvar.findcvar("CWE_rain_sound").setint(0);
+                    else
+                        cvar.findcvar("CWE_rain_sound").setint(1);
+                }
+            }
+        }
+    }
+
+    //store here all effects
+    private array<weather_actor> precipitation;
+    //and all thinkers which "spawn" them
+    private array<sector_cyclon> hurricanes;
+
+    //check sector ceiling texture and return true if it SKY1
+    static bool sector_with_sky(sector s)
+    {
+        bool i = s.getTexture(Sector.ceiling) == TexMan.checkForTexture("F_SKY1", TexMan.Type_Any);
+        return i;
+    }
+
+    //compute bounding pox of a sector (minimal described rectangular)
+    private vector2, vector2 get_sector_bounding_box(sector s)
+    {
+        vector2 x_axis, y_axis;
+        if(s)
+        {
+            double x_smaller, x_greater, y_smaller, y_greater;
+
+            x_smaller = y_smaller = double.infinity;
+            x_greater = y_greater = -double.infinity;
+
+            for (int i = 0; i < s.lines.size(); i++)
+            {
+                let lyn = s.lines[i];
+                if (lyn.v1.p.x < x_smaller ) x_smaller = lyn.v1.p.x;
+                if (lyn.v2.p.x < x_smaller ) x_smaller = lyn.v2.p.x;
+
+                if (lyn.v1.p.x > x_greater ) x_greater = lyn.v1.p.x;
+                if (lyn.v2.p.x > x_greater ) x_greater = lyn.v2.p.x;
+
+                if (lyn.v1.p.y < y_smaller ) y_smaller = lyn.v1.p.y;
+                if (lyn.v2.p.y < y_smaller ) y_smaller = lyn.v2.p.y;
+
+                if (lyn.v1.p.y > y_greater ) y_greater = lyn.v1.p.y;
+                if (lyn.v2.p.y > y_greater ) y_greater = lyn.v2.p.y;
+            }
+
+            x_axis = (x_smaller, x_greater);
+            y_axis = (y_smaller, y_greater);
+        
+            return x_axis, y_axis;
+        }
+
+        return x_axis, y_axis;
+    }
+
+    //should be called from world loaded
+    //init weather base code
+    private void set_weather()
+    {
+        array<sector> processed_sectors; processed_sectors.clear();
+        //for every sectors on map
+        for (int i = 0; i < level.sectors.size(); i++)
+        {   
+            sector sec = level.sectors[i];
+            //check is it have sky ceiling and if so store it to array
+            if (sector_with_sky(sec) && processed_sectors.find(sec) == processed_sectors.size() )
+                processed_sectors.push(sec);
+        }
+
+        for (int i = 0; i < processed_sectors.size(); i++)
+        {
+            //check if it already processed
+            Sector sec = processed_sectors[i];
+            array<sector> temps; temps.clear();
+            temps.push(sec);
+            processed_sectors.delete(processed_sectors.find(sec) );
+            
+            //if no, add it to array and start collect neighborn sectors with sky texture
+            for(uint j = 0; j < temps.size(); j++)
+            {
+                if(temps[j] )
+                {
+                    sector s = temps[j];
+                    for(uint k = 0; k < s.lines.size(); k++)
+                    {
+                        sector check_f, check_b;
+                        uint array_number_f, array_number_b;
+                        if(s.lines[k].backsector)
+                        {
+                            if(s.lines[k].frontsector == s)
+                                check_f = s.lines[k].backsector;
+                            else check_f = s.lines[k].frontsector;
+
+                        }
+                        if(processed_sectors.find(check_f) != processed_sectors.size())
+                        {
+                            temps.push(check_f);
+                            processed_sectors.delete(processed_sectors.find(check_f));
+                        }
+                    }
+                }
+            }
+
+            //calculate bbox here
+            Vector2 bbox_x, bbox_y, temp_bbox_x, temp_bbox_y;
+            bbox_x = bbox_y = (double.infinity, -double.infinity);
+
+            for(uint j = 0; j < temps.size(); j ++)
+            {
+                [temp_bbox_x, temp_bbox_y] = get_sector_bounding_box(temps[j]);
+
+                if (temp_bbox_x.x < bbox_x.x ) bbox_x.x = temp_bbox_x.x;
+                if (temp_bbox_x.y > bbox_x.y ) bbox_x.y = temp_bbox_x.y;
+
+                if (temp_bbox_y.x < bbox_y.x ) bbox_y.x = temp_bbox_y.x;
+                if (temp_bbox_y.y > bbox_y.y ) bbox_y.y = temp_bbox_y.y;
+            }
+
+            sector_cyclon sc = sector_cyclon(new("sector_cyclon") ).twist_the_cyclone(temps, bbox_x, bbox_y, self);
+            hurricanes.push(sc);
+            temps.clear();
+        }
+    }
+
+    //find free weather actor for thinker
+    weather_actor find_droplet() const
+    {
+        for(uint i = 0; i <= precipitation.size(); i++)
+        {
+            if(i == precipitation.size() )
+            {
+                weather_actor a = weather_actor(actor.spawn("weather_actor", pos: (double.infinity, double.infinity, double.infinity) ) );
+                precipitation.push(a);
+                return a;
+            }
+
+            if(precipitation[i] && weather_actor(precipitation[i]).is_on_hold() )
+            {
+                return weather_actor(precipitation[i] );
+                break;
+            }
+        }
+
+        return null;
+    }
+
+    //precache some of the effects at the beginning of a map
+    private void prepeare_droplets()
+    {
+        for(uint i = 0; i < 100; i ++)
+        {
+            actor a = actor.spawn("weather_actor", pos:(double.infinity, double.infinity, double.infinity) );
+            a.setstatelabel("cooldown");
+            precipitation.push(weather_actor(a));
+        }
+    }
+
+
+    //find thinker by attached sector, if it exist
+    private sector_cyclon find_cyclon_by_sector(sector s)
+    {
+        if(s)
+        {
+            for(uint i = 0; i < hurricanes.size(); i++)
+            {
+                if(hurricanes[i])
+                {
+                    array<sector> temp; temp.clear();
+                    sector_cyclon(hurricanes[i]).get_sectors(temp);
+                    for(uint j = 0; j < temp.size(); j++)
+                    {
+                        if(temp[j])
+                        {
+                            if(temp[j] == s)
+                            {
+                                return sector_cyclon(hurricanes[i]);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    //attach nearby thinkers/sectors with SKY1 ceiling into cluster, to decrease amount of "is player looks" checks
+    private void merge_neighborn_thinkers()
+    {
+        //for all thinkers in list
+        for(uint i = 0; i < hurricanes.size(); i++)
+        {
+            if(hurricanes[i])
+            {
+                //get it sector
+                sector s = sector_cyclon(hurricanes[i]).get_original_sector();
+                if(s)
+                {
+                    //and check is another sector have sky ceiling
+                    for(uint j = 0; j < s.lines.size(); j++)
+                    {
+                        if(s.lines[j])
+                        {
+                            sector ss;
+                            if(s.lines[j].flags & line.ML_TWOSIDED && s.lines[j].frontsector == s) ss = s.lines[j].backsector;
+                            else ss = s.lines[j].frontsector;
+
+                            //and if so attach it to original thinker
+                            if(sector_with_sky(ss) )
+                            {
+                                //FIXME something wrong with find thinker function
+                                sector_cyclon sc = find_cyclon_by_sector(ss);
+                                if(sc)
+                                    sector_cyclon(hurricanes[i]).merge_with(sc, self);
+
+                                uint sn = hurricanes.find(sc);
+                                if(sn < hurricanes.size() )
+                                {
+                                    hurricanes[sn].destroy();
+                                    hurricanes.delete(sn);
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}

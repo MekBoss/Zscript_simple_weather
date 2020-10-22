@@ -1,0 +1,77 @@
+class thundercloud : thinker
+{
+    private vector2 map_spot;
+    private sector_cyclon origin_thinker;
+    private vector2 check_distances;
+    private double min_z_height;
+    private double player_camera_height;
+    private uint timer;
+
+    //thinkier init aka c++ class constructor
+    thundercloud condense_vapor(vector2 v, sector_cyclon it, vector2 d)
+    {
+        sector s = level.pointInSector(v);
+        if(s == null || !weather_event.sector_with_sky(s))
+        {
+            self.destroy();
+            return null;
+        }
+
+        map_spot = v;
+        origin_thinker = it;
+        check_distances = d;
+        min_z_height = interval_between_points * 3;
+
+        return self;
+    }
+
+    //check is any player near weather spawning point
+    private bool player_nearby()
+    {
+        bool is_looking = false;
+        console.printf("look for players");
+        for (int i = 0; i < MAXPLAYERS; i++)
+        {
+            PlayerInfo p = players[i];
+            
+            if (p != null && p.camera != null)
+            {
+                console.printf("find some player");
+                if(abs(p.camera.pos.x - map_spot.x) <= check_distances.x * 2 &&  abs(p.camera.pos.y - map_spot.y) <= check_distances.y * 2)
+                {
+                    console.printf("suitable player");
+                    player_camera_height = p.camera.pos.z;
+                    is_looking = true;
+                    break;
+                }
+            }
+        }
+        return is_looking;
+    }
+
+    //tic-tac tic-tac tic-tac.....
+    override void tick()
+    {
+        //console.printf("perc spawner first line");
+        if(!CWE_weather || globalfreeze) return;//if level is frozen return to not spawn >90000 weather actors
+
+        timer ++;
+        
+        if(timer >= CWE_intensity)
+        {
+            console.printf("cwe intensity triggered");
+            timer = 0;
+            if(player_nearby() )
+            {
+                console.printf("player near");
+                vector3 v = (
+                    map_spot.x + frandom(-check_distances.x, check_distances.x),
+                    map_spot.y + frandom(-check_distances.y, check_distances.y),
+                    player_camera_height + min_z_height);
+
+                sector_cyclon(origin_thinker).raining_men(v);
+            }
+        }
+    }
+
+}

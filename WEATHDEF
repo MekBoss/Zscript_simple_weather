@@ -24,7 +24,7 @@ map 1
     intensity = 1;
 }
 
-map 3
+map 7
 {
     weather = rain;
     intensity = 10;

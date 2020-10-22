@@ -1,5 +1,5 @@
 //turns weather on if true and off if false
-server bool CWE_weather = false;
+server bool CWE_weather = true;
 //how often snow/rain/etc effect spawns, greater numbers means less often 
 server int CWE_intensity = 3;
 //type of a weather; it use bitflags, so only power of two would work as intended, other can cause bugs

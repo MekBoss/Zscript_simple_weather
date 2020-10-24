@@ -30,18 +30,18 @@ class weather_event : eventhandler
                     cvar.findcvar("CWE_weather_type").setint(weather_thing.weather_type);
                     cvar.findcvar("CWE_intensity").setint(weather_thing.intensity);
 
-                    if(weather_thing.weather_type != CWE_RAIN)
-                        cvar.findcvar("CWE_rain_sound").setint(0);
-                    else
+                    if(weather_thing.weather_type == CWE_RAIN)
                         cvar.findcvar("CWE_rain_sound").setint(1);
+                    else
+                        cvar.findcvar("CWE_rain_sound").setint(0);
                 }
             }
         }
     }
 
-    //store here all effects
+    //store here all effects...
     private array<weather_actor> precipitation;
-    //and all thinkers which "spawn" them
+    //...and all thinkers which "spawn" them
     private array<sector_cyclon> hurricanes;
 
     //check sector ceiling texture and return true if it SKY1
@@ -203,13 +203,10 @@ class weather_event : eventhandler
                     sector_cyclon(hurricanes[i]).get_sectors(temp);
                     for(uint j = 0; j < temp.size(); j++)
                     {
-                        if(temp[j])
+                        if(temp[j] && temp[j] == s)
                         {
-                            if(temp[j] == s)
-                            {
-                                return sector_cyclon(hurricanes[i]);
-                                break;
-                            }
+                            return sector_cyclon(hurricanes[i]);
+                            break;
                         }
                     }
                 }
@@ -237,8 +234,10 @@ class weather_event : eventhandler
                         if(s.lines[j])
                         {
                             sector ss;
-                            if(s.lines[j].flags & line.ML_TWOSIDED && s.lines[j].frontsector == s) ss = s.lines[j].backsector;
-                            else ss = s.lines[j].frontsector;
+                            if(s.lines[j].flags & line.ML_TWOSIDED && s.lines[j].frontsector == s)
+                                ss = s.lines[j].backsector;
+                            else
+                                ss = s.lines[j].frontsector;
 
                             //and if so attach it to original thinker
                             if(sector_with_sky(ss) )
@@ -261,6 +260,78 @@ class weather_event : eventhandler
                 }
             }
         }
+    }
+
+
+
+    //for preventing multiple thunder sounds in one tick
+    private int lighting_cooldown;
+    //delay between lighting flash and thunder sound
+    private int light_to_sound;
+
+    //set cooldown between two separate lightings
+    bool turn_on_lighting()
+    {
+        if(lighting_cooldown <= 0)
+        {
+            lighting_cooldown = random (850, 4000);
+            light_to_sound = random (35, 350);
+            return true;
+        }
+
+        else return false;
+    }
+
+
+    private bool try_lighting()
+    {
+        if(CWE_weather_type == CWE_RAIN)
+        {
+            if(random(0, 500) <= 1) 
+                return turn_on_lighting();
+        }
+
+        return false;
+    }
+
+    private void activate_lighting_flash()
+    {
+        for(uint i = 0; i < hurricanes.size(); i++)
+        {
+            hurricanes[i].lighting_flash(self);
+        }
+    }
+
+    private void activate_thunder_sound()
+    {
+        for(uint i = 0; i < hurricanes.size(); i++)
+        {
+            hurricanes[i].thunder_sound(self, random(LST_1, LST_8) );
+        }
+    }
+
+    private void lighting_handling()
+    {
+        if(CWE_weather_type == CWE_RAIN)
+        {
+            if(try_lighting() )
+                activate_lighting_flash();
+
+            if(lighting_cooldown > 0)
+                lighting_cooldown--;
+
+            if(light_to_sound > 0)
+            {
+                light_to_sound--;
+                if(light_to_sound <= 0)
+                    activate_thunder_sound();
+            }
+        }
+    }
+
+    override void worldtick()
+    {
+        lighting_handling();
     }
 
 }

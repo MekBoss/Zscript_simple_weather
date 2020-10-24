@@ -1,0 +1,31 @@
+:rain_sequence
+   playrepeat	rain_sound
+   attenuation surround
+end
+
+:thunder_ambient_1
+   play thunder_sound_1
+end
+
+:thunder_ambient_2
+   play thunder_sound_2
+end
+
+:thunder_ambient_3
+   play thunder_sound_3
+end
+:thunder_ambient_4
+   play thunder_sound_4
+end
+:thunder_ambient_5
+   play thunder_sound_5
+end
+:thunder_ambient_6
+   play thunder_sound_6
+end
+:thunder_ambient_7
+   play thunder_sound_7
+end
+:thunder_ambient_8
+   play thunder_sound_8
+end

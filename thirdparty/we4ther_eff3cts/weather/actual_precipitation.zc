@@ -2,6 +2,23 @@
 class weather_actor : actor
 {
     private bool on_hold;
+    //to reduce overhaul from findstate, store all important states here
+    private array <state> weather_states;
+
+    override void postbeginplay()
+    {
+        weather_states.insert(CWE_SNOW, findstate('snow'));
+        weather_states.insert(CWE_RAIN, findstate('rain'));
+        weather_states.insert(CWE_ASH, findstate('ashes'));
+        weather_states.insert(CWE_NONE, findstate('colldown'));
+        
+        super.postbeginplay();
+    }
+
+    void set_weather_type(int type)
+    {
+        setstate(weather_states[type]);
+    }
 
     bool is_on_hold() const
     {
@@ -41,7 +58,7 @@ class weather_actor : actor
             wtdl a 1
             {
                 if(pos.z <= floorz)
-                    setstatelabel("cooldown");
+                    setstate(weather_states[CWE_NONE]);
             }
         loop;
 
@@ -66,7 +83,7 @@ class weather_actor : actor
                 pitch += random(-20, 20);
 
                 if(pos.z <= floorz || pos.z > ceilingz + 1)
-                    setstatelabel("cooldown");
+                    setstate(weather_states[CWE_NONE]);
             }
         loop;
 
@@ -88,7 +105,7 @@ class weather_actor : actor
             {
                 roll += roll_amount;
                 if(pos.z <= floorz)
-                    setstatelabel("cooldown");
+                    setstate(weather_states[CWE_NONE]);
             }
         loop;
 
@@ -110,7 +127,7 @@ class weather_actor : actor
             {
                 roll += roll_amount;
                 if(pos.z <= floorz)
-                    setstatelabel("cooldown");
+                    setstate(weather_states[CWE_NONE]);
             }
         loop;
         

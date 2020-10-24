@@ -1,3 +1,5 @@
+#include "thirdparty/we4ther_eff3cts/weather/constants.zc"
+
 //initialize weather sequence
 //to apply specific weather to specific map go to this file
 #include "thirdparty/we4ther_eff3cts/weather/main_event.zc"
@@ -10,10 +12,6 @@
 #include "thirdparty/we4ther_eff3cts/weather/percipitation_spawner.zc"
 //actual thing which actually shows as snow/rain/etc
 #include "thirdparty/we4ther_eff3cts/weather/actual_precipitation.zc"
-//rain sound
-#include "thirdparty/we4ther_eff3cts/weather/specific_effects/rain_sound.zc"
-//thunder sound
-#include "thirdparty/we4ther_eff3cts/weather/specific_effects/thunder_sound.zc"
 
 //thing that read weather definition
 #include "thirdparty/we4ther_eff3cts/lump_parser/c_like_parser.zc"

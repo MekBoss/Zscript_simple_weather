@@ -13,24 +13,29 @@ void create_weather(in out array<string> data, in out array<parsed_weather> read
                 {
                     //assuming that data format is correct
                     pw.level_number = data[i+1].toint(10);
-                    switch(name(data[i+5]) )
+                    if(data[i+3] == "weather")
                     {
-                        default:
-                            console.printf("incorrect weather format");
-                        break;
+                        switch(name(data[i+5]) )
+                        {
+                            default:
+                                console.printf("incorrect weather format");
+                            break;
 
-                        case 'snow':
-                            pw.weather_type = CWE_SNOW;
-                        break;
+                            case 'snow':
+                                pw.weather_type = CWE_SNOW;
+                            break;
 
-                        case 'rain':
-                            pw.weather_type = CWE_RAIN;
-                        break;
+                            case 'rain':
+                                pw.weather_type = CWE_RAIN;
+                            break;
 
-                        case 'ash':
-                            pw.weather_type = CWE_ASH;
-                        break;
+                            case 'ash':
+                                pw.weather_type = CWE_ASH;
+                            break;
+                        }
                     }
+                    else
+                        console.printf("incorrect symbols %s", data[i+3]);
 
                     if(data[i+7] == "intensity")
                     {

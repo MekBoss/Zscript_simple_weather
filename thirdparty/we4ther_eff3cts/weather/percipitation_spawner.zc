@@ -11,13 +11,15 @@ class thundercloud : thinker
     private double min_z_height;
     private double player_camera_height;
     private uint timer;
+    private int attached_sector;
 
-    thundercloud init(vector2 v, sector_cyclon it, vector2 d)
+    thundercloud init(vector2 v, sector_cyclon it, vector2 d, int sec_id)
     {
         map_spot = v;
         origin_thinker = it;
         check_distances = d;
         min_z_height = interval_between_points * 3;
+        attached_sector = sec_id;
 
         return self;
     }
@@ -59,9 +61,13 @@ class thundercloud : thinker
                 (
                     map_spot.x + frandom(-check_distances.x, check_distances.x),
                     map_spot.y + frandom(-check_distances.y, check_distances.y),
-                    player_camera_height + min_z_height
+                    0
                 );
 
+                double cam_pos = player_camera_height + min_z_height;
+                double ceil_hei = level.sectors[attached_sector].ceilingplane.ZatPoint(v.xy);
+
+                v.z = cam_pos < ceil_hei ? cam_pos : ceil_hei;
                 sector_cyclon(origin_thinker).raining_men(v);
             }
         }

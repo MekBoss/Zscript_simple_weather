@@ -4,15 +4,6 @@ const interval_between_points = 150;
 //rain sound slot for sectors
 const rain_sound_slot = 33;
 
-//possible states of the cyclone thinker
-enum cyclon_state_enum
-{
-    CSE_NOTHING = 0,
-    CSE_ASHED = 1,
-    CSE_SNOWY = 1 << 1,
-    CSE_RAINY = 1 << 2
-};
-
 //global enums for weather type
 enum CWE_TYPE
 {

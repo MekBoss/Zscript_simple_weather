@@ -12,9 +12,12 @@ class sector_cyclon : thinker
     private uint time;
 
     //state of a sector group
-    private cyclon_state_enum cyclon_state;
+    private uint cyclon_state;
     //all weather spawnpoints
     private array<thundercloud> thunder_front;
+    //channel of a rain sound in sectors
+    //index in array match with index in sector array
+    private array<int> rain_channel;
 
     /*
     compare
@@ -30,7 +33,7 @@ class sector_cyclon : thinker
     {
         if(time == 0)
         {
-            attached_sectors.move(s);
+            attached_sectors.append(s);
             god_of_weather = it;
             projection_x = first;
             projection_y = second;
@@ -41,10 +44,6 @@ class sector_cyclon : thinker
             time = level.totaltime;
 
             vector2 sector_center = ( (projection_x.x + projection_x.y, projection_y.x + projection_y.y) / 2 );
-
-            if(CWE_weather_type == CWE_RAIN)
-                for(int i = 0; i < s.size(); i++)
-                    start_sound_sequence(s[i]);
         }
         return self;
     }
@@ -78,13 +77,14 @@ class sector_cyclon : thinker
         double x_min = projection_x.x + interval_between_points;
         double y_min = projection_y.x + interval_between_points;
 
-        for(double xx = x_min; xx < (projection_x.y + x_delta); xx += x_delta)
+        for(double xx = x_min; xx < (projection_x.y); xx += x_delta)
         {
-            for(double yy = y_min; yy < (projection_y.y + y_delta); yy += y_delta)
+            for(double yy = y_min; yy < (projection_y.y); yy += y_delta)
             {
-                thundercloud mp = thundercloud(new("thundercloud") ).init( (xx, yy), self, (x_delta, y_delta) );
+                thundercloud mp = thundercloud(new("thundercloud") ).init( (xx, yy), self, (x_delta, y_delta), Level.PointInSector((xx,yy)).index() );
                 if(mp)
                     thunder_front.push(mp);
+                actor.spawn("healthbonus", (xx, yy, 0));
             }
 
             //precautionary measures
@@ -172,7 +172,7 @@ class sector_cyclon : thinker
         {
             weather_actor wa = weather_event(god_of_weather).find_droplet();
             weather_actor(wa).set_weather_type(CWE_weather_type);
-            wa.setorigin(v, false);
+            wa.setorigin(v - (0, 0, 5), false);
         }
         return null;
     }
@@ -209,9 +209,9 @@ class sector_cyclon : thinker
     //next functions apply more specific effects on specific weather
     private void check_for_ashes()
     {
-        if(CWE_weather_type == CWE_ASH && !(cyclon_state & CSE_ASHED) )
+        if(CWE_weather_type == CWE_ASH && !(cyclon_state & CWE_ASH) )
         {
-            cyclon_state |= CSE_ASHED;
+            cyclon_state |= CWE_ASH;
 
             for(uint i = 0; i < attached_sectors.size(); i++)
             {
@@ -219,9 +219,9 @@ class sector_cyclon : thinker
             }
         }
 
-        if(CWE_weather_type != CWE_ASH && (cyclon_state & CSE_ASHED) )
+        if(CWE_weather_type != CWE_ASH && (cyclon_state & CWE_ASH) )
         {
-            cyclon_state &= ~CSE_ASHED;
+            cyclon_state &= ~CWE_ASH;
 
             for(uint i = 0; i < attached_sectors.size(); i++)
             {
@@ -232,9 +232,9 @@ class sector_cyclon : thinker
 
     private void check_for_snow()
     {
-        if(CWE_weather_type == CWE_SNOW && !(cyclon_state & CSE_SNOWY) )
+        if(CWE_weather_type == CWE_SNOW && !(cyclon_state & CWE_SNOW) )
         {
-            cyclon_state |= CSE_SNOWY;
+            cyclon_state |= CWE_SNOW;
 
             for(uint i = 0; i < attached_sectors.size(); i++)
             {
@@ -242,9 +242,9 @@ class sector_cyclon : thinker
             }
         }
 
-        if(CWE_weather_type != CWE_SNOW && (cyclon_state & CSE_SNOWY) )
+        if(CWE_weather_type != CWE_SNOW && (cyclon_state & CWE_SNOW) )
         {
-            cyclon_state &= ~CSE_SNOWY;
+            cyclon_state &= ~CWE_SNOW;
 
             for(uint i = 0; i < attached_sectors.size(); i++)
             {
@@ -255,24 +255,28 @@ class sector_cyclon : thinker
 
     private void check_for_rain()
     {
-        if(CWE_weather_type == CWE_RAIN && !(cyclon_state & CSE_RAINY) )
+        if(CWE_weather_type == CWE_RAIN && !(cyclon_state & CWE_RAIN) )
         {
-            cyclon_state |= CSE_RAINY;
+            cyclon_state |= CWE_RAIN;
 
             for(uint i = 0; i < attached_sectors.size(); i++)
             {
+                rain_channel.push(start_sound_sequence(attached_sectors[i]) );
+
                 attached_sectors[i].SetFade(color("b5b5ff") );
             }
         }
 
-        if(CWE_weather_type != CWE_RAIN && (cyclon_state & CSE_RAINY) )
+        if(CWE_weather_type != CWE_RAIN && (cyclon_state & CWE_RAIN) )
         {
-            cyclon_state &= ~CSE_RAINY;
+            cyclon_state &= ~CWE_RAIN;
 
             for(uint i = 0; i < attached_sectors.size(); i++)
             {
+                attached_sectors[i].StopSoundSequence(rain_channel[i]);
                 attached_sectors[i].SetFade(color("000000") );
             }
+            rain_channel.clear();
         }
     }
 
@@ -339,6 +343,7 @@ class sector_cyclon : thinker
 
         check_for_ashes();
         check_for_snow();
+        check_for_rain();
     }
 
 }

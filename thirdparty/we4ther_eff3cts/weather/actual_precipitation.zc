@@ -3,16 +3,17 @@ class weather_actor : actor
 {
     private bool on_hold;
     //to reduce overhaul from findstate, store all important states here
-    private array <state> weather_states;
+    private array<state> weather_states;
 
-    override void postbeginplay()
+    override void beginplay()
     {
-        weather_states.insert(CWE_SNOW, findstate('snow'));
-        weather_states.insert(CWE_RAIN, findstate('rain'));
-        weather_states.insert(CWE_ASH, findstate('ashes'));
-        weather_states.insert(CWE_NONE, findstate('colldown'));
+        weather_states.Resize(CWE_ASH+1);
+        weather_states[CWE_SNOW] = findstate('snow');
+        weather_states[CWE_RAIN] = findstate('rain');
+        weather_states[CWE_ASH] = findstate('ashes');
+        weather_states[CWE_NONE] = findstate('cooldown');
         
-        super.postbeginplay();
+        super.beginplay();
     }
 
     void set_weather_type(int type)
@@ -58,7 +59,7 @@ class weather_actor : actor
             wtdl a 1
             {
                 if(pos.z <= floorz)
-                    setstate(weather_states[CWE_NONE]);
+                    set_weather_type(CWE_NONE);
             }
         loop;
 
@@ -82,8 +83,8 @@ class weather_actor : actor
                 roll += random(-40, 40);
                 pitch += random(-20, 20);
 
-                if(pos.z <= floorz || pos.z > ceilingz + 1)
-                    setstate(weather_states[CWE_NONE]);
+                if(pos.z <= floorz)
+                    set_weather_type(CWE_NONE);
             }
         loop;
 
@@ -105,7 +106,7 @@ class weather_actor : actor
             {
                 roll += roll_amount;
                 if(pos.z <= floorz)
-                    setstate(weather_states[CWE_NONE]);
+                    set_weather_type(CWE_NONE);
             }
         loop;
 
@@ -127,7 +128,7 @@ class weather_actor : actor
             {
                 roll += roll_amount;
                 if(pos.z <= floorz)
-                    setstate(weather_states[CWE_NONE]);
+                    set_weather_type(CWE_NONE);
             }
         loop;
         

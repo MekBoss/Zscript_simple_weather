@@ -159,7 +159,7 @@ class sector_cyclon : thinker
                 projection_y.y = proj_y.y;
 
             update_bbox_vertices(projection_x, projection_y);
-            thunder_front.copy(with.thunder_front);
+            thunder_front.append(with.thunder_front);
         }
     }
 
@@ -182,6 +182,9 @@ class sector_cyclon : thinker
     {
         for(uint i = 0; i < thunder_front.size(); i++)
             thunder_front[i].destroy();
+
+        for(uint i = 0; i < attached_sectors.size(); i++)
+            attached_sectors[i].StopSoundSequence(rain_channel[i]);
 
         super.ondestroy();
     }
@@ -297,8 +300,11 @@ class sector_cyclon : thinker
 
                 else
                 {
-                    string tt = string.format("thunder_ambient_", type);
-                    s.StartSoundSequence(i, tt, 1);
+                    name tt = string.format("thunder_ambient_%i", type);
+                    //console.printf("%s", tt);
+                    
+                    s.StartSoundSequence(i, tt, 0);
+                    console.printf("set thunder sound");
                     sound_chann = i;
                     break;
                 }

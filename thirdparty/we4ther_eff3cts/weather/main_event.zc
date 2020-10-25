@@ -323,7 +323,7 @@ class weather_event : eventhandler
             if(light_to_sound > 0)
             {
                 light_to_sound--;
-                if(light_to_sound <= 0)
+                if(light_to_sound <= 0 || cwe_thunder_debug)
                     activate_thunder_sound();
             }
         }

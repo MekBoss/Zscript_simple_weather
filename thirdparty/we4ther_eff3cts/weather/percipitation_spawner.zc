@@ -12,6 +12,7 @@ class thundercloud : thinker
     private double player_camera_height;
     private uint timer;
     private int attached_sector;
+    private bool player_in_sight;
 
     thundercloud init(vector2 v, sector_cyclon it, vector2 d, int sec_id)
     {
@@ -22,6 +23,26 @@ class thundercloud : thinker
         attached_sector = sec_id;
 
         return self;
+    }
+
+    //fills volume  of sector near spawn point with percipitations
+    private void fill_volume()
+    {
+        for(uint i = 0; i < 30; i++)
+        {
+            vector3 v =
+            (
+                map_spot.x + frandom(-check_distances.x, check_distances.x),
+                map_spot.y + frandom(-check_distances.y, check_distances.y),
+                0
+            );
+
+            double ceil_hei = level.sectors[attached_sector].ceilingplane.ZatPoint(v.xy);
+            double floor_hei = level.sectors[attached_sector].ceilingplane.ZatPoint(v.xy);
+
+            v.z = frandom(floor_hei, ceil_hei);
+            sector_cyclon(origin_thinker).raining_men(v);
+        }
     }
 
     //check is any player near weather spawning point

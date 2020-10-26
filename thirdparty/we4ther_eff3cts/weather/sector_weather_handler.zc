@@ -284,6 +284,7 @@ class sector_cyclon : thinker
     }
 
     //attach specific sound to sector and return it channel
+    //attach rain by default or one of the thunder sounds
     private int start_sound_sequence(sector s, int type = -1)
     {
         int sound_chann = -1;
@@ -293,7 +294,7 @@ class sector_cyclon : thinker
             {
                 if(type == -1)
                 {
-                    s.StartSoundSequence(i, "rain_sequence", 1);
+                    s.StartSoundSequence(i, "rain_sequence", 0);
                     sound_chann = i;
                     break;
                 }
@@ -301,10 +302,8 @@ class sector_cyclon : thinker
                 else
                 {
                     name tt = string.format("thunder_ambient_%i", type);
-                    //console.printf("%s", tt);
                     
                     s.StartSoundSequence(i, tt, 0);
-                    console.printf("set thunder sound");
                     sound_chann = i;
                     break;
                 }

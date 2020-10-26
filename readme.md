@@ -14,7 +14,8 @@ Copy "thirdparty", "sprites" and "sounds" folders into you mod folder. Copy cont
 Open WEATHDEF file. Read instruction of how to use it.
 Follow instruction in WEATHDEF and define specific weather for specific map
 
-**NOTE TO MAPPERS**: make sure that height of outdoor sectors at least four times high than player height, otherwise snow/rain would pop up into existance right before player eyes.
+**NOTE TO MAPPERS**: make sure that height of outdoor sectors at least four times higher than player height, otherwise snow/rain would pop up into existance right before player eyes.
+Also tries to make sectors as rectangle as possible, otherwise some points in it would be left without any percipitation spawner. 
 
 There are a bunch of comments what thing do what and how. So if you want to change something it should be easy.
 

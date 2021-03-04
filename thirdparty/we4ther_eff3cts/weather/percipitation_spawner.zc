@@ -15,15 +15,17 @@ class thundercloud : thinker
     private uint timer;
     private int attached_sector;
 
-    thundercloud init(vector2 v, sector_cyclon it, vector2 d, int sec_id)
+    static thundercloud new_thundercloud(vector2 v, sector_cyclon it, vector2 d, int sec_id)
     {
-        map_spot = v;
-        origin_thinker = it;
-        check_distances = d;
-        min_z_height = interval_between_points * 3;
-        attached_sector = sec_id;
+        thundercloud tc = thundercloud(new("thundercloud") );
 
-        return self;
+        tc.map_spot = v;
+        tc.origin_thinker = it;
+        tc.check_distances = d;
+        tc.min_z_height = interval_between_points * 3;
+        tc.attached_sector = sec_id;
+
+        return tc;
     }
 
     //fills volume  of sector near spawn point with percipitations

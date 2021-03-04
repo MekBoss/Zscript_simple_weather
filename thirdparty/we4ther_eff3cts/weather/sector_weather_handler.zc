@@ -79,7 +79,7 @@ class sector_cyclon : thinker
         {
             for(double yy = y_min; yy < (projection_y.y); yy += y_delta)
             {
-                thundercloud mp = thundercloud(new("thundercloud") ).init( (xx, yy), self, (x_delta, y_delta), Level.PointInSector((xx,yy)).index() );
+                thundercloud mp = thundercloud.new_thundercloud( (xx, yy), self, (x_delta, y_delta), Level.PointInSector((xx,yy)).index() );
                 if(mp)
                     thunder_front.push(mp);
                 //actor.spawn("healthbonus", (xx, yy, 0));

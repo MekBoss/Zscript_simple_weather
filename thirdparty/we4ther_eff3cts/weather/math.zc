@@ -1,0 +1,38 @@
+class weather_math
+{
+    static vector3 line_point_intersection(vector3 point, vector3 line_point, vector3 line_direction, bool squared = false)
+    {
+        vector3 offset = (line_point - point) - ( (line_point - point) dot line_direction) * line_direction;
+        return point + offset;
+    }
+
+    static double line_point_distance(vector3 point, vector3 line_point, vector3 line_direction, bool squared = false)
+    {
+        vector3 offset = (line_point - point) - ( (line_point - point) dot line_direction) * line_direction;
+        //point pos + offset give interesection of normal and line
+        if(squared)
+            return offset dot offset;
+
+        return offset.length();
+    }
+
+
+    //return true if point v3 located on the same line between points v1 and v2
+    static bool is_between_points(vector3 v1, vector3 v2, vector3 v3)
+    {
+        vector3 vec_1 = v1 - v3;
+        vector3 vec_2 = v2 - v3;
+        if(vec_1 cross vec_2 == (0, 0, 0) )//equal to zero if vectors complanar
+        {
+            //a^2 + b^2 =/= (a+b)^2
+            return (vector_abs(vec_1) + vector_abs(vec_2) == vector_abs(v1 - v2) );
+        }
+
+        return false;
+    }
+
+    static vector3 vector_abs(vector3 v)
+    {
+        return (abs(v.x), abs(v.y), abs(v.z) );
+    }
+}

@@ -1,12 +1,13 @@
 //base event
 class weather_event : eventhandler
-    {
+{
+    //maps weather info container
     private array<parsed_weather> maps_weather;
     //read weatdef lump and construct from it actual weather definition
     override void onregister()
     {
         array<string> data; data.clear();
-
+        //parser
         c_like_parser p = c_like_parser(new("c_like_parser") );
         c_like_parser(p).read_lump("WEATHDEF", data);
 
@@ -14,9 +15,10 @@ class weather_event : eventhandler
         weather_definition(wd).create_weather(data, maps_weather);
     }
 
-
+    //entry point for initializing weather
     override void worldLoaded(WorldEvent e)
     {
+        //check for info from WEATHER lump
         for(uint i = 0; i < maps_weather.size(); i++)
         {
             if(maps_weather[i])
@@ -27,6 +29,7 @@ class weather_event : eventhandler
                 {
                     set_weather();
                     prepeare_droplets();
+                    //cvar as globally accessible storage for weather type
                     cvar.findcvar("CWE_weather_type").setint(weather_thing.weather_type);
                     cvar.findcvar("CWE_intensity").setint(weather_thing.intensity);
 
@@ -45,13 +48,13 @@ class weather_event : eventhandler
     private array<sector_cyclon> hurricanes;
 
     //check sector ceiling texture and return true if it SKY1
-    static bool sector_with_sky(sector s)
+    bool is_sky_sector(sector s)
     {
         bool i = s.getTexture(Sector.ceiling) == TexMan.checkForTexture("F_SKY1", TexMan.Type_Any);
         return i;
     }
 
-    //compute bounding pox of a sector (minimal described rectangular)
+    //compute bounding box of a sector (minimal described rectangular)
     private vector2, vector2 get_sector_bounding_box(sector s)
     {
         vector2 x_axis, y_axis;
@@ -83,6 +86,8 @@ class weather_event : eventhandler
         
             return x_axis, y_axis;
         }
+        else
+            object.throwabortexception("No sector in get_sector_bounding_box");
 
         return x_axis, y_axis;
     }
@@ -91,57 +96,68 @@ class weather_event : eventhandler
     //init weather base code
     private void set_weather()
     {
+        //storage for al sky sectors
         array<sector> processed_sectors; processed_sectors.clear();
-        //for every sectors on map
+        //for every sectors on map...
         for (int i = 0; i < level.sectors.size(); i++)
         {   
             sector sec = level.sectors[i];
-            //check is it have sky ceiling and if so store it to array
-            if (sector_with_sky(sec) && processed_sectors.find(sec) == processed_sectors.size() )
+            //...check is it have sky ceiling and if so store it to array
+            if (is_sky_sector(sec) && processed_sectors.find(sec) == processed_sectors.size() )
                 processed_sectors.push(sec);
         }
-
-        for (int i = 0; i < processed_sectors.size(); i++)
+        //now if we find some sky sectors, try to group separate, but touching sectors in one group
+        //for (int i = 0; i < processed_sectors.size(); i++)
+        while(processed_sectors.size() >= 1)
         {
-            //check if it already processed
-            Sector sec = processed_sectors[i];
-            array<sector> temps; temps.clear();
-            temps.push(sec);
-            processed_sectors.delete(processed_sectors.find(sec) );
-            
-            //if no, add it to array and start collect neighborn sectors with sky texture
-            for(uint j = 0; j < temps.size(); j++)
-            {
-                if(temps[j] )
-                {
-                    sector s = temps[j];
-                    for(uint k = 0; k < s.lines.size(); k++)
-                    {
-                        sector check_f, check_b;
-                        uint array_number_f, array_number_b;
-                        if(s.lines[k].backsector)
-                        {
-                            if(s.lines[k].frontsector == s)
-                                check_f = s.lines[k].backsector;
-                            else check_f = s.lines[k].frontsector;
+            //and push it in new array
+            array<sector> new_group; new_group.clear();
+            new_group.push(processed_sectors[0]);
+            //delete current sector from "main" array
+            processed_sectors.delete(0);
 
-                        }
-                        if(processed_sectors.find(check_f) != processed_sectors.size())
+            //now, time to collect neighbor sectors with sky texture
+            for(uint j = 0; j < new_group.size(); j++)
+            {
+                if(new_group[j] )
+                {
+                    sector cur_sec = new_group[j];
+                    //check all lines of a sector
+                    for(uint k = 0; k < cur_sec.lines.size(); k++)
+                    {
+                        sector check_f;
+                        //pick "other" sector...
+                        if(!cur_sec.lines[k].backsector)
+                            //one sided line, skip it
+                            continue;
+                        else 
                         {
-                            temps.push(check_f);
-                            processed_sectors.delete(processed_sectors.find(check_f));
+                            if(cur_sec.lines[k].frontsector == cur_sec)
+                                check_f = cur_sec.lines[k].backsector;
+                            else check_f = cur_sec.lines[k].frontsector;
+                        }
+
+                        //...check for it in array of sky sectors...
+                        uint sec_id = processed_sectors.find(check_f);
+                        if(sec_id != processed_sectors.size() )
+                        {
+                            //...and if it is there delete it from there
+                            //and push it to new group instead
+                            new_group.push(processed_sectors[sec_id]);
+                            processed_sectors.delete(sec_id);
                         }
                     }
                 }
             }
 
-            //calculate bbox here
+            //store current and function returned bbox
             Vector2 bbox_x, bbox_y, temp_bbox_x, temp_bbox_y;
             bbox_x = bbox_y = (double.infinity, -double.infinity);
 
-            for(uint j = 0; j < temps.size(); j ++)
+            //calculate bbox here
+            for(uint j = 0; j < new_group.size(); j ++)
             {
-                [temp_bbox_x, temp_bbox_y] = get_sector_bounding_box(temps[j]);
+                [temp_bbox_x, temp_bbox_y] = get_sector_bounding_box(new_group[j]);
 
                 if (temp_bbox_x.x < bbox_x.x ) bbox_x.x = temp_bbox_x.x;
                 if (temp_bbox_x.y > bbox_x.y ) bbox_x.y = temp_bbox_x.y;
@@ -150,9 +166,10 @@ class weather_event : eventhandler
                 if (temp_bbox_y.y > bbox_y.y ) bbox_y.y = temp_bbox_y.y;
             }
 
-            sector_cyclon sc = sector_cyclon(new("sector_cyclon") ).twist_the_cyclone(temps, bbox_x, bbox_y, self);
+            //and now create new cyclon handler for a current group of sectors
+            sector_cyclon sc = sector_cyclon.new_cyclone(new_group, bbox_x, bbox_y, self);
             hurricanes.push(sc);
-            temps.clear();
+            new_group.clear();
         }
     }
 
@@ -161,6 +178,7 @@ class weather_event : eventhandler
     {
         for(uint i = 0; i <= precipitation.size(); i++)
         {
+            //no free actors, create new one
             if(i == precipitation.size() )
             {
                 weather_actor a = weather_actor(actor.spawn("weather_actor", pos: (double.infinity, double.infinity, double.infinity) ) );
@@ -174,6 +192,8 @@ class weather_event : eventhandler
                 break;
             }
         }
+        //should never enter here
+        throwabortexception("fund_droplet: outside of function body");
 
         return null;
     }
@@ -216,65 +236,17 @@ class weather_event : eventhandler
         return null;
     }
 
-    //attach nearby thinkers/sectors with SKY1 ceiling into cluster, to decrease amount of "is player looks" checks
-    private void merge_neighborn_thinkers()
-    {
-        //for all thinkers in list
-        for(uint i = 0; i < hurricanes.size(); i++)
-        {
-            if(hurricanes[i])
-            {
-                //get it sector
-                sector s = sector_cyclon(hurricanes[i]).get_original_sector();
-                if(s)
-                {
-                    //and check is another sector have sky ceiling
-                    for(uint j = 0; j < s.lines.size(); j++)
-                    {
-                        if(s.lines[j])
-                        {
-                            sector ss;
-                            if(s.lines[j].flags & line.ML_TWOSIDED && s.lines[j].frontsector == s)
-                                ss = s.lines[j].backsector;
-                            else
-                                ss = s.lines[j].frontsector;
-
-                            //and if so attach it to original thinker
-                            if(sector_with_sky(ss) )
-                            {
-                                //FIXME something wrong with find thinker function
-                                sector_cyclon sc = find_cyclon_by_sector(ss);
-                                if(sc)
-                                    sector_cyclon(hurricanes[i]).merge_with(sc, self);
-
-                                uint sn = hurricanes.find(sc);
-                                if(sn < hurricanes.size() )
-                                {
-                                    hurricanes[sn].destroy();
-                                    hurricanes.delete(sn);
-                                }
-
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-
     //for preventing multiple thunder sounds in one tick
-    private int lighting_cooldown;
+    private int lightning_cooldown;
     //delay between lighting flash and thunder sound
     private int light_to_sound;
 
     //set cooldown between two separate lightings
     bool turn_on_lighting()
     {
-        if(lighting_cooldown <= 0)
+        if(lightning_cooldown <= 0)
         {
-            lighting_cooldown = random (850, 4000);
+            lightning_cooldown = random (850, 4000);
             light_to_sound = random (35, 350);
             return true;
         }
@@ -282,8 +254,8 @@ class weather_event : eventhandler
         else return false;
     }
 
-
-    private bool try_lighting()
+    //try light lighting
+    private bool try_lightning()
     {
         if(CWE_weather_type == CWE_RAIN)
         {
@@ -294,11 +266,11 @@ class weather_event : eventhandler
         return false;
     }
 
-    private void activate_lighting_flash()
+    private void activate_lightning_flash()
     {
         for(uint i = 0; i < hurricanes.size(); i++)
         {
-            hurricanes[i].lighting_flash(self);
+            hurricanes[i].lightning_flash(self);
         }
     }
 
@@ -310,15 +282,15 @@ class weather_event : eventhandler
         }
     }
 
-    private void lighting_handling()
+    private void lightning_handling()
     {
         if(CWE_weather_type == CWE_RAIN)
         {
-            if(try_lighting() )
-                activate_lighting_flash();
+            if(try_lightning() )
+                activate_lightning_flash();
 
-            if(lighting_cooldown > 0)
-                lighting_cooldown--;
+            if(lightning_cooldown > 0)
+                lightning_cooldown--;
 
             if(light_to_sound > 0)
             {
@@ -331,7 +303,7 @@ class weather_event : eventhandler
 
     override void worldtick()
     {
-        lighting_handling();
+        lightning_handling();
     }
 
 }

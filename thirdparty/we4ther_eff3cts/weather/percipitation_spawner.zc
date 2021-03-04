@@ -6,13 +6,14 @@ class thundercloud : thinker
     //distance to check around map point is player inside
     //and to determine how fasr away from map spot weather should have spawns
     private vector2 check_distances;
+    //used for checking is percipitation spawned inside sky sector
+    private array<line> closest_lines;
 
     private sector_cyclon origin_thinker;
     private double min_z_height;
     private double player_camera_height;
     private uint timer;
     private int attached_sector;
-    private bool player_in_sight;
 
     thundercloud init(vector2 v, sector_cyclon it, vector2 d, int sec_id)
     {
@@ -45,7 +46,7 @@ class thundercloud : thinker
         }
     }
 
-    //check is any player near weather spawning point
+    //check is any player near this weather spawning point
     private bool player_nearby()
     {
         bool is_looking = false;

@@ -1,4 +1,5 @@
 #include "thirdparty/we4ther_eff3cts/weather/constants.zc"
+#include "thirdparty/we4ther_eff3cts/weather/math.zc"
 
 //initialize weather sequence
 //to apply specific weather to specific map go to this file

@@ -1,6 +1,9 @@
 :rain_sequence
    playrepeat	rain_sound
-   //attenuation surround
+   //attenuation normal
+   //attenuation idle
+   //attenuation static
+   attenuation surround
 end
 
 :thunder_ambient_1

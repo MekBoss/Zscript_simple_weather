@@ -8,8 +8,6 @@ class sector_cyclon : thinker
     private vector2 projection_x, projection_y;
     //same as bbox, but already in 2d vector form
     private vector2 bounds_vertice_1, bounds_vertice_2, bounds_vertice_3, bounds_vertice_4;
-    //technical value to prevent abusing of public init function
-    private uint time;
 
     //state of a sector group
     private uint cyclon_state;
@@ -29,47 +27,45 @@ class sector_cyclon : thinker
     */
 
     //init function / constructor
-    sector_cyclon twist_the_cyclone(in out array<sector> s, vector2 first, vector2 second, weather_event it)
+    static sector_cyclon new_cyclone(in out array<sector> s, vector2 first, vector2 second, weather_event it)
     {
-        if(time == 0)
-        {
-            attached_sectors.append(s);
-            god_of_weather = it;
-            projection_x = first;
-            projection_y = second;
+        sector_cyclon sc = sector_cyclon(new("sector_cyclon"));
 
-            update_bbox_vertices(projection_x, projection_y);
-            sector_thunderclouds();
-            
-            time = level.totaltime;
+        sc.attached_sectors.append(s);
+        sc.god_of_weather = it;
+        sc.projection_x = first;
+        sc.projection_y = second;
 
-            vector2 sector_center = ( (projection_x.x + projection_x.y, projection_y.x + projection_y.y) / 2 );
-        }
-        return self;
+        sc.update_bbox_vertices(sc.projection_x, sc.projection_y);
+        sc.sector_thunderclouds();
+        
+        return sc;
     }
 
-    //fill all sector group with weather spawn points
+    //fill all group of sectors with weather spawn points
     private void sector_thunderclouds()
     {
         double p_dist = interval_between_points * 2;
 
         double x_length, y_length, x_delta, y_delta;
-        int _x_, _y_;
-        uint i = 0;
-        //getting length of a sector along each axis
+        int points_count_x, points_count_y;
+        //getting length of a sector group along each axis
         x_length = projection_x.y - projection_x.y;
         y_length = projection_y.y - projection_y.y;
 
+        //now calculate amount of points along each axis
+        //with current offset between them
         x_delta = x_length / p_dist;
         y_delta = y_length / p_dist;
-    
-        _x_ = int(x_delta);
-        _y_ = int(y_delta);
+        points_count_x = int(x_delta);
+        points_count_y = int(y_delta);
 
-        if(abs(_x_) > 0)
-            x_delta = abs( ( ( (x_delta - _x_) / _x_) * p_dist ) );
-        if(abs(_y_) > 0)
-            y_delta = abs( ( ( (y_delta - _y_) / _y_) * p_dist ) );
+        //mow calculate "defect of filling"
+        //to fill area of group as densely as possible
+        if(abs(points_count_x) > 0)
+            x_delta = abs( ( ( (x_delta - points_count_x) / points_count_x) * p_dist ) );
+        if(abs(points_count_y) > 0)
+            y_delta = abs( ( ( (y_delta - points_count_y) / points_count_y) * p_dist ) );
 
         x_delta += p_dist;
         y_delta += p_dist;
@@ -77,6 +73,7 @@ class sector_cyclon : thinker
         double x_min = projection_x.x + interval_between_points;
         double y_min = projection_y.x + interval_between_points;
 
+        uint i = 0;
         for(double xx = x_min; xx < (projection_x.y); xx += x_delta)
         {
             for(double yy = y_min; yy < (projection_y.y); yy += y_delta)
@@ -137,32 +134,6 @@ class sector_cyclon : thinker
         */
     }
 
-    //technical stuff for initialization and/or merging two thinkers together
-    void merge_with(sector_cyclon with, weather_event caller)
-    {
-        if(caller && with && caller == god_of_weather)
-        {
-            vector2 proj_x, proj_y;
-            [proj_x, proj_y] = with.get_sector_bounds();
-
-            with.get_sectors(attached_sectors);
-
-            //again, because vectors arrys in zscript is just a dream 
-            if(proj_x.x < projection_x.x)
-                projection_x.x = proj_x.x;
-            if(proj_x.y > projection_x.y)
-                projection_x.y = proj_x.y;
-
-            if(proj_y.x < projection_y.x)
-                projection_y.x = proj_y.x;
-            if(proj_y.y > projection_y.y)
-                projection_y.y = proj_y.y;
-
-            update_bbox_vertices(projection_x, projection_y);
-            thunder_front.append(with.thunder_front);
-        }
-    }
-
 
     //МУЖЦИКИЙ ДОЖДЬ АЛЛИЛУЯ
     //АЛИЛУЯ ДОЖДЬ ИЗ МУЖИКОВ
@@ -182,9 +153,6 @@ class sector_cyclon : thinker
     {
         for(uint i = 0; i < thunder_front.size(); i++)
             thunder_front[i].destroy();
-
-        for(uint i = 0; i < attached_sectors.size(); i++)
-            attached_sectors[i].StopSoundSequence(rain_channel[i]);
 
         super.ondestroy();
     }
@@ -301,9 +269,9 @@ class sector_cyclon : thinker
 
                 else
                 {
-                    name tt = string.format("thunder_ambient_%i", type);
+                    name thunder_type = string.format("thunder_ambient_%i", type);
                     
-                    s.StartSoundSequence(i, tt, 0);
+                    s.StartSoundSequence(i, thunder_type, 0);
                     sound_chann = i;
                     break;
                 }
@@ -325,7 +293,7 @@ class sector_cyclon : thinker
 
     //bright flash from lighting
     //happens before thunder sound
-    void lighting_flash(eventhandler caller)
+    void lightning_flash(eventhandler caller)
     {
         if(caller != god_of_weather)
             return;

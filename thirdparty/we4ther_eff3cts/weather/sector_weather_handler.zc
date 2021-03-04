@@ -50,9 +50,8 @@ class sector_cyclon : thinker
         double x_length, y_length, x_delta, y_delta;
         int points_count_x, points_count_y;
         //getting length of a sector group along each axis
-        x_length = projection_x.y - projection_x.y;
-        y_length = projection_y.y - projection_y.y;
-
+        x_length = projection_x.y - projection_x.x;
+        y_length = projection_y.y - projection_y.x;
         //now calculate amount of points along each axis
         //with current offset between them
         x_delta = x_length / p_dist;
@@ -63,12 +62,14 @@ class sector_cyclon : thinker
         //mow calculate "defect of filling"
         //to fill area of group as densely as possible
         if(abs(points_count_x) > 0)
-            x_delta = abs( ( ( (x_delta - points_count_x) / points_count_x) * p_dist ) );
+            x_delta = abs( x_delta / points_count_x * p_dist);
+        else
+            x_delta = p_dist;
+            
         if(abs(points_count_y) > 0)
-            y_delta = abs( ( ( (y_delta - points_count_y) / points_count_y) * p_dist ) );
-
-        x_delta += p_dist;
-        y_delta += p_dist;
+            y_delta = abs( y_delta / points_count_y * p_dist);
+        else
+            y_delta = p_dist;
 
         double x_min = projection_x.x + interval_between_points;
         double y_min = projection_y.x + interval_between_points;
@@ -86,7 +87,7 @@ class sector_cyclon : thinker
 
             //precautionary measures
             i++;
-            if(i > 10000000)
+            if(i > 10000)
                 break;
         }
     }

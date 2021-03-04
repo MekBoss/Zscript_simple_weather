@@ -193,7 +193,7 @@ class weather_event : eventhandler
             }
         }
         //should never enter here
-        throwabortexception("fund_droplet: outside of function body");
+        throwabortexception("find_droplet: outside of function body");
 
         return null;
     }

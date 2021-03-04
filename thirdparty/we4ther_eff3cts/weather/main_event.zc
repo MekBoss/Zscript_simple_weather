@@ -48,10 +48,9 @@ class weather_event : eventhandler
     private array<sector_cyclon> hurricanes;
 
     //check sector ceiling texture and return true if it SKY1
-    bool is_sky_sector(sector s)
+    static bool is_sky_sector(sector s)
     {
-        bool i = s.getTexture(Sector.ceiling) == TexMan.checkForTexture("F_SKY1", TexMan.Type_Any);
-        return i;
+        return s.getTexture(Sector.ceiling) == TexMan.checkForTexture("F_SKY1", TexMan.Type_Any);
     }
 
     //compute bounding box of a sector (minimal described rectangular)

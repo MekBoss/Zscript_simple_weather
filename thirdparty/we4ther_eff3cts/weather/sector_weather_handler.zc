@@ -31,19 +31,19 @@ class sector_cyclon : thinker
     {
         sector_cyclon sc = sector_cyclon(new("sector_cyclon"));
 
-        sc.attached_sectors.append(s);
+        sc.attached_sectors.move(s);
         sc.god_of_weather = it;
         sc.projection_x = first;
         sc.projection_y = second;
 
         sc.update_bbox_vertices(sc.projection_x, sc.projection_y);
-        sc.sector_thunderclouds();
+        sc.group_thunderclouds();
         
         return sc;
     }
 
     //fill all group of sectors with weather spawn points
-    private void sector_thunderclouds()
+    private void group_thunderclouds()
     {
         double p_dist = interval_between_points * 2;
 
@@ -79,9 +79,18 @@ class sector_cyclon : thinker
         {
             for(double yy = y_min; yy < (projection_y.y); yy += y_delta)
             {
-                thundercloud mp = thundercloud.new_thundercloud( (xx, yy), self, (x_delta, y_delta), Level.PointInSector((xx,yy)).index() );
-                if(mp)
-                    thunder_front.push(mp);
+                //pick all lines in group which are closest to current position
+                //and send them to spawner for future usage
+                array<int> la; la.clear();
+                BlockLinesIterator it = BlockLinesIterator.CreateFromPos((xx, yy, 0), 0, x_delta > y_delta ? x_delta : y_delta );
+                while(it.next() )
+                    if(la.find(it.curline.index() ) == la.size() && (weather_event.is_sky_sector(it.curline.frontsector) ||  weather_event.is_sky_sector(it.curline.backsector) ) )
+                        la.push(it.curline.index() );
+
+
+                thundercloud mp = thundercloud.new_thundercloud( (xx, yy), self, (x_delta, y_delta), la );
+                thunder_front.push(mp);
+
                 //actor.spawn("healthbonus", (xx, yy, 0));
             }
 

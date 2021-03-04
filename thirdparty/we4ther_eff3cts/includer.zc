@@ -1,5 +1,9 @@
+//all weather related constants
 #include "thirdparty/we4ther_eff3cts/weather/constants.zc"
+//basic analitic geometry math
 #include "thirdparty/we4ther_eff3cts/weather/math.zc"
+//helpers that store info for future use
+#include "thirdparty/we4ther_eff3cts/weather/helpers.zc"
 
 //initialize weather sequence
 //to apply specific weather to specific map go to this file
@@ -16,4 +20,5 @@
 
 //thing that read weather definition
 #include "thirdparty/we4ther_eff3cts/lump_parser/c_like_parser.zc"
+//thing that store parsed weather definition
 #include "thirdparty/we4ther_eff3cts/lump_parser/weather_definition.zc"

@@ -8,13 +8,18 @@ class thundercloud : thinker
     private vector2 check_distances;
     //used for checking is percipitation spawned inside sky sector
     private array<int> closest_lines;
+    private array<line_info> lines_info;
 
     private sector_cyclon origin_thinker;
     private double min_z_height;
     private double player_camera_height;
     private uint timer;
     private int main_sector;
-
+    //create new spawn point for percipitations
+    //vec is position on a map on XY plane
+    //it is main event
+    //dist is distance aling axis inside of which point should check for player camera
+    //cl is integer array filloed with lines id
     static thundercloud new_thundercloud(vector2 vec, sector_cyclon it, vector2 dist, in array<int> cl)
     {
         thundercloud tc = thundercloud(new("thundercloud") );
@@ -25,10 +30,24 @@ class thundercloud : thinker
         tc.min_z_height = interval_between_points * 3;
         tc.closest_lines.move(cl);
         int l; double d;
-        [l, d] = tc.find_closest_line((vec, 0));
-        if(d > dist.x && d > dist.y)
+        for(uint i = 0; i < tc.closest_lines.size(); i++)
         {
-            //too far away from sky sector
+            line_info ln = line_info(new("line_info"));
+            ln.line_id = tc.closest_lines[i];
+            ln.line_normal = ( (-level.lines[tc.closest_lines[i]].delta.y, level.lines[tc.closest_lines[i]].delta.x), 0);
+            ln.midline = ( (level.lines[tc.closest_lines[i]].v1.p + level.lines[tc.closest_lines[i]].v2.p)/2, 0);
+            ln.front_sky = weather_event.is_sky_sector(level.lines[tc.closest_lines[i]].frontsector);
+            ln.line_dir = (level.lines[tc.closest_lines[i]].delta, 0);
+
+            tc.lines_info.push(ln);
+        }
+
+        [l, d] = tc.find_closest_line((vec, 0));
+        if(d > dist.x * dist.x && d > dist.y * dist.y)
+        {
+            //console.printf("check dist %f, x dist %f, y dist %f", d, dist.x * dist.x, dist.y * dist.y);
+            //console.printf("destroy thundecloud");
+            //too far away from any sky sector
             tc.destroy();
             return null;
         }
@@ -81,13 +100,17 @@ class thundercloud : thinker
     {
         double dist = double.infinity;
         int closest = -1;
-        for(uint i = 0; i < closest_lines.size(); i++)
+        for(uint i = 0; i < lines_info.size(); i++)
         {
-            double line_dist_sqrd = weather_math.line_point_distance(pos, (level.lines[closest_lines[i]].v1.p, 0), (level.lines[closest_lines[i]].delta, 0), true);
+            let inf = line_info(lines_info[i]);
+
+            //console.printf("stored midline %f %f %f, dir %f %f %f, actual v1 %f %f  dir %f %f", inf.midline, inf.line_dir, level.lines[inf.line_id].v1.p, level.lines[inf.line_id].delta);
+            double line_dist_sqrd = weather_math.point_line_distance(pos, inf.midline, inf.line_dir, true);
             if(line_dist_sqrd < dist)
             {
+                //console.printf("last distance %f cur distance %f", dist, line_dist_sqrd);
                 dist = line_dist_sqrd;
-                closest = closest_lines[i];
+                closest = i;
             }
         }
         return closest, dist;
@@ -114,10 +137,23 @@ class thundercloud : thinker
 
                 int near_line = find_closest_line(v);
 
-
+                let line_inf = line_info(lines_info[near_line]);
+                if(line_inf.front_sky)
+                {
+                    if( ( (line_inf.midline - v) dot line_inf.line_normal) <= 0 )
+                    {
+                        //console.printf("+ normal");
+                        return;
+                    }
+                }
+                else if( ( (line_inf.midline - v) dot -line_inf.line_normal) >= 0 )
+                {
+                    //console.printf("- normal");
+                    return;
+                }
 
                 double cam_pos = player_camera_height + min_z_height;
-                double ceil_hei = level.sectors[main_sector].ceilingplane.ZatPoint(v.xy);
+                double ceil_hei = level.lines[lines_info[near_line].line_id].frontsector.ceilingplane.ZatPoint(v.xy);
 
                 v.z = cam_pos < ceil_hei ? cam_pos : ceil_hei;
                 sector_cyclon(origin_thinker).raining_men(v);

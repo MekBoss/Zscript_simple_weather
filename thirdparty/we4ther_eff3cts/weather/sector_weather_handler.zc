@@ -82,11 +82,10 @@ class sector_cyclon : thinker
                 //pick all lines in group which are closest to current position
                 //and send them to spawner for future usage
                 array<int> la; la.clear();
-                BlockLinesIterator it = BlockLinesIterator.CreateFromPos((xx, yy, 0), 0, x_delta > y_delta ? x_delta : y_delta );
-                while(it.next() )
-                    if(la.find(it.curline.index() ) == la.size() && (weather_event.is_sky_sector(it.curline.frontsector) ||  weather_event.is_sky_sector(it.curline.backsector) ) )
-                        la.push(it.curline.index() );
-
+                BlockLinesIterator lineit = BlockLinesIterator.CreateFromPos((xx, yy, 0), 0, (x_delta > y_delta ? x_delta : y_delta) );
+                while(lineit.next() )
+                    if(la.find(lineit.curline.index() ) == la.size() && (weather_event.is_sky_sector(lineit.curline.frontsector) ||  (lineit.curline.backsector && weather_event.is_sky_sector(lineit.curline.backsector) ) ) )
+                        la.push(lineit.curline.index() );
 
                 thundercloud mp = thundercloud.new_thundercloud( (xx, yy), self, (x_delta, y_delta), la );
                 thunder_front.push(mp);
@@ -162,7 +161,8 @@ class sector_cyclon : thinker
     override void OnDestroy()
     {
         for(uint i = 0; i < thunder_front.size(); i++)
-            thunder_front[i].destroy();
+            if(thunder_front[i])
+                thunder_front[i].destroy();
 
         super.ondestroy();
     }

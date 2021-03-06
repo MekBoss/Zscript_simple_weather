@@ -149,7 +149,7 @@ class weather_event : eventhandler
                 }
             }
 
-            //store current and function returned bbox
+            //for storing current and function returned bbox
             Vector2 bbox_x, bbox_y, temp_bbox_x, temp_bbox_y;
             bbox_x = bbox_y = (double.infinity, -double.infinity);
 

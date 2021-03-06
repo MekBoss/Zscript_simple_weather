@@ -88,9 +88,11 @@ class sector_cyclon : thinker
                         la.push(lineit.curline.index() );
 
                 thundercloud mp = thundercloud.new_thundercloud( (xx, yy), self, (x_delta, y_delta), la );
-                thunder_front.push(mp);
-
-                //actor.spawn("healthbonus", (xx, yy, 0));
+                if(mp)
+                {
+                    thunder_front.push(mp);
+                    actor.spawn("healthbonus", (xx, yy, 0));
+                }
             }
 
             //precautionary measures

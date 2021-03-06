@@ -84,8 +84,19 @@ class sector_cyclon : thinker
                 array<int> la; la.clear();
                 BlockLinesIterator lineit = BlockLinesIterator.CreateFromPos((xx, yy, 0), 0, (x_delta > y_delta ? x_delta : y_delta) );
                 while(lineit.next() )
-                    if(la.find(lineit.curline.index() ) == la.size() && (weather_event.is_sky_sector(lineit.curline.frontsector) ||  (lineit.curline.backsector && weather_event.is_sky_sector(lineit.curline.backsector) ) ) )
-                        la.push(lineit.curline.index() );
+                    if(la.find(lineit.curline.index() ) == la.size() )
+                    {
+                        //skip two sided lines both sides of which are sky sectors
+                        //since they have no point to be processed
+                        if(weather_event.is_sky_sector(lineit.curline.frontsector) && (lineit.curline.backsector && weather_event.is_sky_sector(lineit.curline.backsector) ) )
+                            continue;
+                        
+                        if(weather_event.is_sky_sector(lineit.curline.frontsector) )
+                            la.push(lineit.curline.index() );
+                        
+                        if(lineit.curline.backsector && weather_event.is_sky_sector(lineit.curline.backsector) ) 
+                            la.push(lineit.curline.index() );
+                    }
 
                 thundercloud mp = thundercloud.new_thundercloud( (xx, yy), self, (x_delta, y_delta), la );
                 if(mp)

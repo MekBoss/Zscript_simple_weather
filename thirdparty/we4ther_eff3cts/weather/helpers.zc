@@ -5,5 +5,6 @@ class line_info
     vector3 line_normal;//normal of the line, in the direction of a front
     vector3 midline;//position of a midline in the world
     vector3 line_dir;//direction of a line
+    vector3 line_vert_1, line_vert_2;//line vertice 1 and 2
     bool front_sky;//sky sector is at front line if true, false otherwise
 }

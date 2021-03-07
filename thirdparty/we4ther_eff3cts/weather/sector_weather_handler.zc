@@ -113,6 +113,19 @@ class sector_cyclon : thinker
         }
     }
 
+    sector is_inside_group(vector2 v)
+    {
+        sector s = level.PointInSector(v);
+        for(uint i = 0; i < attached_sectors.size(); i++)
+            if(attached_sectors[i] == s)
+            {
+                return s;
+                break;
+            }
+
+        return null;
+    }
+
     //technical method used in initialization inside event, return first attached sector
     sector get_original_sector() const
     {
@@ -211,6 +224,7 @@ class sector_cyclon : thinker
             {
                 attached_sectors[i].SetFade(color("C9C9C9") );
             }
+            return;
         }
 
         if(CWE_weather_type != CWE_ASH && (cyclon_state & CWE_ASH) )
@@ -234,6 +248,7 @@ class sector_cyclon : thinker
             {
                 attached_sectors[i].SetFade(color("f0f0f0") );
             }
+            return;
         }
 
         if(CWE_weather_type != CWE_SNOW && (cyclon_state & CWE_SNOW) )
@@ -259,6 +274,7 @@ class sector_cyclon : thinker
 
                 attached_sectors[i].SetFade(color("b5b5ff") );
             }
+            return;
         }
 
         if(CWE_weather_type != CWE_RAIN && (cyclon_state & CWE_RAIN) )

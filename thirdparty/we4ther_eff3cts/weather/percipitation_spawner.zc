@@ -18,7 +18,7 @@ class thundercloud : thinker
     //create new spawn point for percipitations
     //vec is position on a map on XY plane
     //it is main event
-    //dist is distance aling axis inside of which point should check for player camera
+    //dist is distance along axis inside of which point should check for player camera
     //cl is integer array filloed with lines id
     static thundercloud new_thundercloud(vector2 vec, sector_cyclon it, vector2 dist, in array<int> cl)
     {
@@ -38,15 +38,16 @@ class thundercloud : thinker
             ln.midline = ( (level.lines[tc.closest_lines[i]].v1.p + level.lines[tc.closest_lines[i]].v2.p)/2, 0);
             ln.front_sky = weather_event.is_sky_sector(level.lines[tc.closest_lines[i]].frontsector);
             ln.line_dir = (level.lines[tc.closest_lines[i]].delta, 0);
-
+            ln.line_vert_1 = (level.lines[tc.closest_lines[i]].v1.p, 0);
+            ln.line_vert_2 = (level.lines[tc.closest_lines[i]].v2.p, 0);
             tc.lines_info.push(ln);
         }
 
         [l, d] = tc.find_closest_line((vec, 0));
         if(d > dist.x * dist.x && d > dist.y * dist.y)
         {
-            //console.printf("check dist %f, x dist %f, y dist %f", d, dist.x * dist.x, dist.y * dist.y);
-            //console.printf("destroy thundecloud");
+            console.printf("check dist %f, x dist %f, y dist %f", d, dist.x * dist.x, dist.y * dist.y);
+            console.printf("destroy thundecloud");
             //too far away from any sky sector
             tc.destroy();
             return null;
@@ -95,8 +96,11 @@ class thundercloud : thinker
         }
         return is_looking;
     }
-
-    private int, double find_closest_line(vector3 pos)
+    //return closest line from array to some position
+    //pos is position in world
+    //strict_search specify should it return ANY line (even if it projection laying outside of line vertices, false case)
+    //or one where projection lying between line vertices, true case
+    private int, double find_closest_line(vector3 pos, bool strict_search = false)
     {
         double dist = double.infinity;
         int closest = -1;
@@ -105,7 +109,12 @@ class thundercloud : thinker
             let inf = line_info(lines_info[i]);
 
             //console.printf("stored midline %f %f %f, dir %f %f %f, actual v1 %f %f  dir %f %f", inf.midline, inf.line_dir, level.lines[inf.line_id].v1.p, level.lines[inf.line_id].delta);
-            double line_dist_sqrd = weather_math.point_line_distance(pos, inf.midline, inf.line_dir, true);
+            vector3 point_proj = weather_math.point_line_intersection(pos, inf.midline, inf.line_dir);
+            if(strict_search)
+                if(!weather_math.is_between_points(inf.line_vert_1, inf.line_vert_2, point_proj) )
+                    continue;
+
+            double line_dist_sqrd = (point_proj - pos) dot (point_proj - pos);
             if(line_dist_sqrd < dist)
             {
                 //console.printf("last distance %f cur distance %f", dist, line_dist_sqrd);
@@ -135,28 +144,46 @@ class thundercloud : thinker
                     0
                 );
 
-                int near_line = find_closest_line(v);
-
-                let line_inf = line_info(lines_info[near_line]);
-                if(line_inf.front_sky)
+                sector s = sector_cyclon(origin_thinker).is_inside_group(v.xy);
+                if(s)
                 {
-                    if( ( (line_inf.midline - v) dot line_inf.line_normal) <= 0 )
+                    //double ceil_hei = s.frontsector.ceilingplane.ZatPoint(v.xy);
+
+                    double cam_pos = player_camera_height + min_z_height;
+                    v.z = cam_pos;// < ceil_hei ? cam_pos : ceil_hei;
+
+                    sector_cyclon(origin_thinker).raining_men(v);
+                }
+                /*
+                int near_line = find_closest_line(v, true);
+                if(near_line > -1)
+                {
+                    let line_inf = line_info(lines_info[near_line]);
+
+                    if(line_inf.front_sky)
                     {
-                        //console.printf("+ normal");
+                        if( ( (line_inf.midline - v) dot line_inf.line_normal) >= 0 )
+                        {
+                            //console.printf("behind line, dot < 0");
+                            return;
+                        }
+                    }
+                    else if( ( (line_inf.midline - v) dot line_inf.line_normal) <= 0 )
+                    {
+                        //console.printf("front line, dot > 0");
                         return;
                     }
-                }
-                else if( ( (line_inf.midline - v) dot -line_inf.line_normal) >= 0 )
-                {
-                    //console.printf("- normal");
-                    return;
-                }
+                    //console.printf("closest line index %i", line_inf.line_id);
+                    //console.printf("offset to midline %f %f %f, dot product %f", (line_inf.midline - v), (line_inf.midline - v) dot line_inf.line_normal);
 
-                double cam_pos = player_camera_height + min_z_height;
-                double ceil_hei = level.lines[lines_info[near_line].line_id].frontsector.ceilingplane.ZatPoint(v.xy);
+                    double ceil_hei = level.lines[lines_info[near_line].line_id].frontsector.ceilingplane.ZatPoint(v.xy);
 
-                v.z = cam_pos < ceil_hei ? cam_pos : ceil_hei;
-                sector_cyclon(origin_thinker).raining_men(v);
+                    double cam_pos = player_camera_height + min_z_height;
+                    v.z = cam_pos;// < ceil_hei ? cam_pos : ceil_hei;
+
+                    sector_cyclon(origin_thinker).raining_men(v);
+                }
+                */
             }
         }
     }

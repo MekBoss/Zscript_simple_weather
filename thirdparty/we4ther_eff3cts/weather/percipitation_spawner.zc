@@ -46,8 +46,8 @@ class thundercloud : thinker
         [l, d] = tc.find_closest_line((vec, 0));
         if(d > dist.x * dist.x && d > dist.y * dist.y)
         {
-            console.printf("check dist %f, x dist %f, y dist %f", d, dist.x * dist.x, dist.y * dist.y);
-            console.printf("destroy thundecloud");
+            //console.printf("check dist %f, x dist %f, y dist %f", d, dist.x * dist.x, dist.y * dist.y);
+            //console.printf("destroy thundecloud");
             //too far away from any sky sector
             tc.destroy();
             return null;
@@ -147,43 +147,10 @@ class thundercloud : thinker
                 sector s = sector_cyclon(origin_thinker).is_inside_group(v.xy);
                 if(s)
                 {
-                    //double ceil_hei = s.frontsector.ceilingplane.ZatPoint(v.xy);
-
-                    double cam_pos = player_camera_height + min_z_height;
-                    v.z = cam_pos;// < ceil_hei ? cam_pos : ceil_hei;
+                    v.z = player_camera_height + min_z_height;
 
                     sector_cyclon(origin_thinker).raining_men(v);
                 }
-                /*
-                int near_line = find_closest_line(v, true);
-                if(near_line > -1)
-                {
-                    let line_inf = line_info(lines_info[near_line]);
-
-                    if(line_inf.front_sky)
-                    {
-                        if( ( (line_inf.midline - v) dot line_inf.line_normal) >= 0 )
-                        {
-                            //console.printf("behind line, dot < 0");
-                            return;
-                        }
-                    }
-                    else if( ( (line_inf.midline - v) dot line_inf.line_normal) <= 0 )
-                    {
-                        //console.printf("front line, dot > 0");
-                        return;
-                    }
-                    //console.printf("closest line index %i", line_inf.line_id);
-                    //console.printf("offset to midline %f %f %f, dot product %f", (line_inf.midline - v), (line_inf.midline - v) dot line_inf.line_normal);
-
-                    double ceil_hei = level.lines[lines_info[near_line].line_id].frontsector.ceilingplane.ZatPoint(v.xy);
-
-                    double cam_pos = player_camera_height + min_z_height;
-                    v.z = cam_pos;// < ceil_hei ? cam_pos : ceil_hei;
-
-                    sector_cyclon(origin_thinker).raining_men(v);
-                }
-                */
             }
         }
     }

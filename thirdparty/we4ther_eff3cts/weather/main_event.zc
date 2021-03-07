@@ -245,8 +245,8 @@ class weather_event : eventhandler
     {
         if(lightning_cooldown <= 0)
         {
-            lightning_cooldown = random (850, 4000);
-            light_to_sound = random (35, 350);
+            lightning_cooldown = random[weather] (850, 4000);
+            light_to_sound = random[weather] (35, 350);
             return true;
         }
 
@@ -258,7 +258,7 @@ class weather_event : eventhandler
     {
         if(CWE_weather_type == CWE_RAIN)
         {
-            if(random(0, 500) <= 1) 
+            if(random[weather](0, 500) <= 1) 
                 return turn_on_lighting();
         }
 
@@ -277,7 +277,7 @@ class weather_event : eventhandler
     {
         for(uint i = 0; i < hurricanes.size(); i++)
         {
-            hurricanes[i].thunder_sound(self, random(LST_1, LST_8) );
+            hurricanes[i].thunder_sound(self, random[weather](LST_1, LST_8) );
         }
     }
 

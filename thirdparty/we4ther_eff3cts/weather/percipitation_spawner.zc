@@ -63,15 +63,15 @@ class thundercloud : thinker
         {
             vector3 v =
             (
-                map_spot.x + frandom(-check_distances.x, check_distances.x),
-                map_spot.y + frandom(-check_distances.y, check_distances.y),
+                map_spot.x + frandom[weather](-check_distances.x, check_distances.x),
+                map_spot.y + frandom[weather](-check_distances.y, check_distances.y),
                 0
             );
 
             double ceil_hei = level.sectors[main_sector].ceilingplane.ZatPoint(v.xy);
             double floor_hei = level.sectors[main_sector].floorplane.ZatPoint(v.xy);
 
-            v.z = frandom(floor_hei, ceil_hei);
+            v.z = frandom[weather](floor_hei, ceil_hei);
             sector_cyclon(origin_thinker).raining_men(v);
         }
     }
@@ -139,8 +139,8 @@ class thundercloud : thinker
             {
                 vector3 v =
                 (
-                    map_spot.x + frandom(-check_distances.x, check_distances.x),
-                    map_spot.y + frandom(-check_distances.y, check_distances.y),
+                    map_spot.x + frandom[weather](-check_distances.x, check_distances.x),
+                    map_spot.y + frandom[weather](-check_distances.y, check_distances.y),
                     0
                 );
 

@@ -53,7 +53,7 @@ class weather_actor : actor
                 on_hold = false;
                 A_SetRenderStyle(0.6, STYLE_translucent);
                 scale = (0.003, 0.008);
-                vel.z = -frandom(20, 40);
+                vel.z = -frandom[weather](20, 40);
             }
         rain_falling:
             wtdl a 1
@@ -67,9 +67,9 @@ class weather_actor : actor
             snfl a 1
             {
                 on_hold = false;
-                vel.z -= frandom(3.5, 5.5);
+                vel.z -= frandom[weather](3.5, 5.5);
                 scale = (0.04, 0.04);
-                frame = random(0, 8);
+                frame = random[weather](0, 8);
                 A_SetRenderStyle(1, STYLE_translucent);
             
                 bROLLSPRITE = true;
@@ -79,9 +79,9 @@ class weather_actor : actor
         snow_falling:
             snfl "#" 2
             {
-                vel.xy += ( frandom(-0.5, 0.5), frandom(-0.5, 0.5) );
-                roll += random(-40, 40);
-                pitch += random(-20, 20);
+                vel.xy += ( frandom[weather](-0.5, 0.5), frandom[weather](-0.5, 0.5) );
+                roll += random[weather](-40, 40);
+                pitch += random[weather](-20, 20);
 
                 if(pos.z <= floorz)
                     set_weather_type(CWE_NONE);
@@ -92,14 +92,14 @@ class weather_actor : actor
             stpk "#" 0
             {
                 on_hold = false;
-                vel.z -= frandom(7, 12);
+                vel.z -= frandom[weather](7, 12);
                 scale = (0.02, 0.02);
-                frame = random(0, 8);
+                frame = random[weather](0, 8);
 
                 bROLLSPRITE = true;
                 bROLLCENTER = true;
 
-                roll_amount = random(-15, 15);
+                roll_amount = random[weather](-15, 15);
             }
         ashes_falling:
             stpk "#" 1
@@ -114,14 +114,14 @@ class weather_actor : actor
             wtft "#" 0
             {
                 on_hold = false;
-                vel.z -= frandom(7, 12);
+                vel.z -= frandom[weather](7, 12);
                 scale = (0.02, 0.02);
-                frame = random(0, 4);
+                frame = random[weather](0, 4);
 
                 bROLLSPRITE = true;
                 bROLLCENTER = true;
 
-                roll_amount = random(-15, 15);
+                roll_amount = random[weather](-15, 15);
             }
         it_falling:
             wtft "#" 1

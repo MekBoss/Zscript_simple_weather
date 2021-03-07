@@ -102,7 +102,7 @@ class sector_cyclon : thinker
                 if(mp)
                 {
                     thunder_front.push(mp);
-                    actor.spawn("healthbonus", (xx, yy, 0));
+                    //actor.spawn("healthbonus", (xx, yy, 0));
                 }
             }
 

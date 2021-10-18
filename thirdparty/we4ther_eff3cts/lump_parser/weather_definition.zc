@@ -9,10 +9,10 @@ void create_weather(in out array<string> data, in out array<parsed_weather> read
             if(data[i] == "map")
             {
                 parsed_weather pw = parsed_weather(new("parsed_weather") );
-                if(data[i+1].toint(10) > 0 && data[i+2] == "{")
+                if(data[i+2] == "{")
                 {
                     //assuming that data format is correct
-                    pw.level_number = data[i+1].toint(10);
+                    pw.map_name = data[i+1];
                     if(data[i+3] == "weather")
                     {
                         switch(name(data[i+5]) )
@@ -53,7 +53,8 @@ void create_weather(in out array<string> data, in out array<parsed_weather> read
 
 class parsed_weather
 {
-    int level_number;
+    //name of map in a wad file
+    string map_name;
 
     int weather_type;
     int intensity;

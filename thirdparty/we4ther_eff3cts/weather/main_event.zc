@@ -25,7 +25,7 @@ class weather_event : eventhandler
             {
                 let weather_thing = parsed_weather(maps_weather[i]);
             
-                if(weather_thing.level_number == level.levelnum)
+                if(weather_thing.map_name == level.mapname)
                 {
                     set_weather();
                     prepeare_droplets();

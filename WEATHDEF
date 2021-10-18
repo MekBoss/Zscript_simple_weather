@@ -2,29 +2,34 @@
 this file defines weather type for a specific map
 
 To define weather for specific map you should use
-map "level number"
+map "map name"
 {
-    weather = snow/rain/ash; <- semicolon at the end important!!!!!
+    weather = snow/rain/ash; <- semicolon at the end important!!!!!111111
     intensity = number from 0 to 10;
 }
 
-for doom 2 first map level number equal to 1, since its the first map
+"map name" is a name of a map file inside a wad file aka name that you specify when you create map in map editor
+in other words, on example of a Gzdoom, if you start new game in doom2 and open console (` button under esc key)
+you would see 
+"MAP01 - Entryway"
+MAP01 is a name of a map file
+Entryway is a name of a level
 
 intensity is time between spawning of new weather actors in tick
-(greater numbers increase delaym smaler reduce)
+(greater numbers increase delay, smaller reduce)
 
 
-next example set snow for any first map and rain for any second map of any wad
+next examples snows how to set rain for map with name map01 and snow for map with name map07
 in all sectors which have sky "ceiling"
 */
 
-map 1
+map map01
 {
     weather = snow;
     intensity = 1;
 }
 
-map 7
+map map07
 {
     weather = rain;
     intensity = 10;

@@ -113,6 +113,8 @@ class sector_cyclon : thinker
         }
     }
 
+    //return true if specific position are inside one of the sky sectors
+    //of current group
     sector is_inside_group(vector2 v)
     {
         sector s = level.PointInSector(v);

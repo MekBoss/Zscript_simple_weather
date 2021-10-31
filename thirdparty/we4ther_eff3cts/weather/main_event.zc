@@ -1,6 +1,15 @@
 //base event
 class weather_event : eventhandler
 {
+    //store here all effects...
+    private array<weather_actor> precipitation;
+    //...and all thinkers which "spawn" them
+    private array<sector_cyclon> hurricanes;
+    //for preventing multiple thunder sounds in one tick
+    private int lightning_cooldown;
+    //delay between lighting flash and thunder sound
+    private int light_to_sound;
+
     //entry point for initializing weather
     override void worldLoaded(WorldEvent e)
     {
@@ -36,11 +45,6 @@ class weather_event : eventhandler
             cvar.findcvar("CWE_rain_sound").setint(0);
     }
 
-
-    //store here all effects...
-    private array<weather_actor> precipitation;
-    //...and all thinkers which "spawn" them
-    private array<sector_cyclon> hurricanes;
 
     //check sector ceiling texture and return true if it SKY1
     static bool is_sky_sector(sector s)
@@ -228,11 +232,6 @@ class weather_event : eventhandler
 
         return null;
     }
-
-    //for preventing multiple thunder sounds in one tick
-    private int lightning_cooldown;
-    //delay between lighting flash and thunder sound
-    private int light_to_sound;
 
     //set cooldown between two separate lightings
     bool turn_on_lighting()

@@ -29,28 +29,34 @@ class thundercloud : thinker
         tc.check_distances = dist;
         tc.min_z_height = interval_between_points * 3;
         tc.closest_lines.move(cl);
-        int l; double d;
-        for(uint i = 0; i < tc.closest_lines.size(); i++)
+        
+        //checking out is any of sky sector line are close anough to this specific spawn point
+        //aka is it could 'spawn' actors inside sky sector only
+        //cant move into dedicated function because of zscript limitations
         {
-            line_info ln = line_info(new("line_info"));
-            ln.line_id = tc.closest_lines[i];
-            ln.line_normal = ( (-level.lines[tc.closest_lines[i]].delta.y, level.lines[tc.closest_lines[i]].delta.x), 0);
-            ln.midline = ( (level.lines[tc.closest_lines[i]].v1.p + level.lines[tc.closest_lines[i]].v2.p)/2, 0);
-            ln.front_sky = weather_event.is_sky_sector(level.lines[tc.closest_lines[i]].frontsector);
-            ln.line_dir = (level.lines[tc.closest_lines[i]].delta, 0);
-            ln.line_vert_1 = (level.lines[tc.closest_lines[i]].v1.p, 0);
-            ln.line_vert_2 = (level.lines[tc.closest_lines[i]].v2.p, 0);
-            tc.lines_info.push(ln);
-        }
+            int l; double d;
+            for(uint i = 0; i < tc.closest_lines.size(); i++)
+            {
+                line_info ln = line_info(new("line_info"));
+                ln.line_id = tc.closest_lines[i];
+                ln.line_normal = ( (-level.lines[tc.closest_lines[i]].delta.y, level.lines[tc.closest_lines[i]].delta.x), 0);
+                ln.midline = ( (level.lines[tc.closest_lines[i]].v1.p + level.lines[tc.closest_lines[i]].v2.p)/2, 0);
+                ln.front_sky = weather_event.is_sky_sector(level.lines[tc.closest_lines[i]].frontsector);
+                ln.line_dir = (level.lines[tc.closest_lines[i]].delta, 0);
+                ln.line_vert_1 = (level.lines[tc.closest_lines[i]].v1.p, 0);
+                ln.line_vert_2 = (level.lines[tc.closest_lines[i]].v2.p, 0);
+                tc.lines_info.push(ln);
+            }
 
-        [l, d] = tc.find_closest_line((vec, 0));
-        if(d > dist.x * dist.x && d > dist.y * dist.y)
-        {
-            //console.printf("check dist %f, x dist %f, y dist %f", d, dist.x * dist.x, dist.y * dist.y);
-            //console.printf("destroy thundecloud");
-            //too far away from any sky sector
-            tc.destroy();
-            return null;
+            [l, d] = tc.find_closest_line((vec, 0));
+            if(d > dist.x * dist.x && d > dist.y * dist.y)
+            {
+                //console.printf("check dist %f, x dist %f, y dist %f", d, dist.x * dist.x, dist.y * dist.y);
+                //console.printf("destroy thundecloud");
+                //too far away from any sky sector
+                tc.destroy();
+                return null;
+            }
         }
 
         return tc;
@@ -67,7 +73,8 @@ class thundercloud : thinker
                 map_spot.y + frandom[weather](-check_distances.y, check_distances.y),
                 0
             );
-
+            //should  find sectors floor and ceiling planes
+            //before fillinf it with something
             double ceil_hei = level.sectors[main_sector].ceilingplane.ZatPoint(v.xy);
             double floor_hei = level.sectors[main_sector].floorplane.ZatPoint(v.xy);
 

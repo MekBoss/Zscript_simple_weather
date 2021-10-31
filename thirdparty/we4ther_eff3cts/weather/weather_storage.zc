@@ -1,0 +1,39 @@
+class weather_storage : staticeventhandler
+{
+    //maps weather info container
+    //store all info about weather for all maps
+    private array<parsed_weather> maps_weather;
+    //read weatdef lump and construct from it actual weather definition
+    override void onregister()
+    {
+        array<string> data; data.clear();
+        //parser
+        c_like_parser p = c_like_parser(new("c_like_parser") );
+        c_like_parser(p).read_lump("WEATHDEF", data);
+
+        weather_definition wd = weather_definition(new("weather_definition") );
+        weather_definition(wd).create_weather(data, maps_weather);
+
+        console.printf("there are %i entries in weather list", maps_weather.size() );
+        for(int i = 0; i <maps_weather.size() ; i++ )
+        {
+            console.printf("entrie %i, map name %s", i+1, parsed_weather(maps_weather[i]).map_name);
+        }
+    }
+
+    //get weather type for specific map
+    //if didnt found any map with specified name, return null
+    parsed_weather get_weather_for(string map_name)
+    {
+        //check for info from WEATHER lump
+        for(uint i = 0; i < maps_weather.size(); i++)
+        {
+            if(maps_weather[i])
+                //should happens only once, so performance impact from comparing string should be negligible
+                if(parsed_weather(maps_weather[i]).map_name == map_name)
+                    return parsed_weather(maps_weather[i]);
+        }
+
+        return null;
+    }
+}

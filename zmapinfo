@@ -1,4 +1,4 @@
 gameinfo
 {
-	AddEventHandlers = "weather_event"
+	AddEventHandlers = "weather_event", "weather_storage"
 }

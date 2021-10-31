@@ -5,6 +5,9 @@
 //helpers that store info for future use
 #include "thirdparty/we4ther_eff3cts/weather/helpers.zc"
 
+//store weather definition in entire mod?
+#include "thirdparty/we4ther_eff3cts/weather/weather_storage.zc"
+
 //initialize weather sequence
 //to apply specific weather to specific map go to this file
 #include "thirdparty/we4ther_eff3cts/weather/main_event.zc"

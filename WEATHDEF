@@ -9,8 +9,8 @@ map "map name"
 }
 
 "map name" is a name of a map file inside a wad file aka name that you specify when you create map in map editor
-in other words, on example of a Gzdoom, if you start new game in doom2 and open console (` button under esc key)
-you would see 
+in other words, on example of a Gzdoom, if you start new game in doom2 and open console (` button, under esc key)
+you would see
 "MAP01 - Entryway"
 MAP01 is a name of a map file
 Entryway is a name of a level

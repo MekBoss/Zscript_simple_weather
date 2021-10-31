@@ -1,46 +1,41 @@
 //base event
 class weather_event : eventhandler
 {
-    //maps weather info container
-    private array<parsed_weather> maps_weather;
-    //read weatdef lump and construct from it actual weather definition
-    override void onregister()
-    {
-        array<string> data; data.clear();
-        //parser
-        c_like_parser p = c_like_parser(new("c_like_parser") );
-        c_like_parser(p).read_lump("WEATHDEF", data);
-
-        weather_definition wd = weather_definition(new("weather_definition") );
-        weather_definition(wd).create_weather(data, maps_weather);
-    }
-
     //entry point for initializing weather
     override void worldLoaded(WorldEvent e)
     {
-        //check for info from WEATHER lump
-        for(uint i = 0; i < maps_weather.size(); i++)
-        {
-            if(maps_weather[i])
-            {
-                let weather_thing = parsed_weather(maps_weather[i]);
-            
-                if(weather_thing.map_name == level.mapname)
-                {
-                    set_weather();
-                    prepeare_droplets();
-                    //cvar as globally accessible storage for weather type
-                    cvar.findcvar("CWE_weather_type").setint(weather_thing.weather_type);
-                    cvar.findcvar("CWE_intensity").setint(weather_thing.intensity);
+        if(e.IsReopen)
+            return;
 
-                    if(weather_thing.weather_type == CWE_RAIN)
-                        cvar.findcvar("CWE_rain_sound").setint(1);
-                    else
-                        cvar.findcvar("CWE_rain_sound").setint(0);
-                }
-            }
+        //look for global storage for a weather defenitions
+        weather_storage st = weather_storage(StaticEventHandler.find("weather_storage") );
+        //should never happens
+        if(!st)
+            throwabortexception("Cant find global storage for weather, AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!!!!!!!!!!!!!!!!!!!!");
+
+        let weather_thing = weather_storage(st).get_weather_for(level.mapname);
+
+        //map dont have any weather associated with its name
+        if(!weather_thing)
+        {
+            console.printf("no weather specified for curent map, self destroying");
+            self.destroy();
+            return;
         }
+
+        //collect all sky sectors
+        set_weather(); 
+        prepeare_droplets();
+        //cvar, as globally accessible storage for weather type
+        cvar.findcvar("CWE_weather_type").setint(weather_thing.weather_type);
+        cvar.findcvar("CWE_intensity").setint(weather_thing.intensity);
+
+        if(weather_thing.weather_type == CWE_RAIN)
+            cvar.findcvar("CWE_rain_sound").setint(1);
+        else
+            cvar.findcvar("CWE_rain_sound").setint(0);
     }
+
 
     //store here all effects...
     private array<weather_actor> precipitation;
@@ -91,7 +86,6 @@ class weather_event : eventhandler
         return x_axis, y_axis;
     }
 
-    //should be called from world loaded
     //init weather base code
     private void set_weather()
     {
@@ -192,7 +186,7 @@ class weather_event : eventhandler
             }
         }
         //should never enter here
-        throwabortexception("find_droplet: outside of function body");
+        throwabortexception("find_droplet: outside of main function body");
 
         return null;
     }

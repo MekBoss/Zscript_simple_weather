@@ -1,53 +1,53 @@
 class weather_definition
 {
-void create_weather(in out array<string> data, in out array<parsed_weather> ready_data)
-{
-    if(data.size() > 0)
+    void create_weather(in out array<string> data, in out array<parsed_weather> ready_data)
     {
-        for(uint i = 0; i < data.size(); i++)
+        if(data.size() > 0)
         {
-            if(data[i] == "map")
+            for(uint i = 0; i < data.size(); i++)
             {
-                parsed_weather pw = parsed_weather(new("parsed_weather") );
-                if(data[i+2] == "{")
+                if(data[i] == "map")
                 {
-                    //assuming that data format is correct
-                    pw.map_name = data[i+1];
-                    if(data[i+3] == "weather")
+                    parsed_weather pw = parsed_weather(new("parsed_weather") );
+                    if(data[i+2] == "{")
                     {
-                        switch(name(data[i+5]) )
+                        //assuming that data format is correct
+                        pw.map_name = data[i+1];
+                        if(data[i+3] == "weather")
                         {
-                            default:
-                                console.printf("incorrect weather format");
-                            break;
+                            switch(name(data[i+5]) )
+                            {
+                                default:
+                                    console.printf("incorrect weather format");
+                                break;
 
-                            case 'snow':
-                                pw.weather_type = CWE_SNOW;
-                            break;
+                                case 'snow':
+                                    pw.weather_type = CWE_SNOW;
+                                break;
 
-                            case 'rain':
-                                pw.weather_type = CWE_RAIN;
-                            break;
+                                case 'rain':
+                                    pw.weather_type = CWE_RAIN;
+                                break;
 
-                            case 'ash':
-                                pw.weather_type = CWE_ASH;
-                            break;
+                                case 'ash':
+                                    pw.weather_type = CWE_ASH;
+                                break;
+                            }
                         }
-                    }
-                    else
-                        console.printf("incorrect symbols %s", data[i+3]);
+                        else
+                            console.printf("incorrect symbols %s", data[i+3]);
 
-                    if(data[i+7] == "intensity")
-                    {
-                        pw.intensity = data[i+9].toint(10);
-                    }
+                        if(data[i+7] == "intensity")
+                        {
+                            pw.intensity = data[i+9].toint(10);
+                        }
 
-                    ready_data.push(pw);
+                        ready_data.push(pw);
+                    }
                 }
             }
         }
     }
-}
 
 }
 
